@@ -1,0 +1,12 @@
+{
+  "name": "goatfc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GoatFC — Ronaldo vs Messi penalty shootout. Pick your GOAT, take the penalty, celebrate, climb the global GOAT standings. goatfc.fun",
+  "dependencies": {
+    "@solana/web3.js": "^1.95.4",
+    "@vercel/kv": "^3.0.0",
+    "bs58": "^6.0.0",
+    "tweetnacl": "^1.0.3"
+  }
+}

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoatFC — Ronaldo vs Messi Penalty Shootout</title>
+  <meta name="description" content="Who is the GOAT? Pick Ronaldo or Messi, choose your country, and take the penalty. Score, celebrate, and push your GOAT up the global standings. goatfc.fun" />
+  <meta name="theme-color" content="#0a1b12" />
+  <meta property="og:title" content="GoatFC — Who is the GOAT?" />
+  <meta property="og:description" content="Ronaldo or Messi? Pick your GOAT, take the penalty, celebrate the goal." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+
+  <!-- ===== TOP BAR ===== -->
+  <header class="topbar">
+    <div class="brand">GOAT<span>FC</span></div>
+    <div class="standings-mini" id="standingsMini" title="Global goals — Ronaldo vs Messi">
+      <span class="sm r"><b id="miniR">0</b> CR7</span>
+      <div class="sm-bar"><i id="miniBar" class="r"></i></div>
+      <span class="sm m">LM10 <b id="miniM">0</b></span>
+    </div>
+    <div class="top-actions">
+      <span class="mode-pill beta" id="modePill" hidden>BETA</span>
+      <button class="btn ghost sm" id="lbBtn">🏆</button>
+      <button class="btn lime sm" id="connectBtn">Connect</button>
+      <button class="btn ghost sm" id="accountBtn" hidden>Account</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- ===== STADIUM ===== -->
+    <section class="stage">
+      <div class="stadium" id="stadium">
+        <div class="stars" id="stars" aria-hidden="true"></div>
+        <div class="pitch" aria-hidden="true"></div>
+        <div class="goal" aria-hidden="true"></div>
+
+        <div class="zones" id="zones" aria-label="Pick a corner">
+          <button class="zone" data-zone="TL">◤<span class="x9">×9.9</span></button>
+          <button class="zone" data-zone="TC"></button>
+          <button class="zone" data-zone="TR">◥<span class="x9">×9.9</span></button>
+          <button class="zone" data-zone="BL">◣<span class="x9">×9.9</span></button>
+          <button class="zone" data-zone="BC"></button>
+          <button class="zone" data-zone="BR">◢<span class="x9">×9.9</span></button>
+        </div>
+
+        <!-- keeper -->
+        <div class="keeper" id="keeper" aria-hidden="true">
+          <svg viewBox="0 0 120 170" xmlns="http://www.w3.org/2000/svg">
+            <rect x="44" y="118" width="14" height="42" rx="6" fill="#15314a"/>
+            <rect x="62" y="118" width="14" height="42" rx="6" fill="#15314a"/>
+            <rect x="40" y="156" width="22" height="10" rx="4" fill="#0c0c0c"/>
+            <rect x="58" y="156" width="22" height="10" rx="4" fill="#0c0c0c"/>
+            <path d="M30 78 Q60 64 90 78 L86 122 Q60 130 34 122 Z" fill="#16d39a"/>
+            <text x="60" y="112" font-family="Anton, sans-serif" font-size="24" fill="#06241a" text-anchor="middle">1</text>
+            <circle cx="26" cy="92" r="13" fill="#ffd34e"/>
+            <circle cx="94" cy="92" r="13" fill="#ffd34e"/>
+            <path d="M34 84 L26 92" stroke="#16d39a" stroke-width="10" stroke-linecap="round"/>
+            <path d="M86 84 L94 92" stroke="#16d39a" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="60" cy="46" r="22" fill="#f0c9a0"/>
+            <circle cx="52" cy="44" r="3.4" fill="#1a1408"/>
+            <circle cx="68" cy="44" r="3.4" fill="#1a1408"/>
+            <path d="M50 56 Q60 62 70 56" stroke="#1a1408" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+            <path d="M40 30 Q60 16 80 30 L78 36 Q60 26 42 36 Z" fill="#3a2a1a"/>
+          </svg>
+        </div>
+
+        <!-- ball -->
+        <div class="ball" id="ball" aria-hidden="true">
+          <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="30" cy="30" r="28" fill="#fff" stroke="#cfcfcf" stroke-width="2"/>
+            <path d="M30 12 l10 7 -4 12 -12 0 -4 -12 z" fill="#111"/>
+            <path d="M14 24 l-6 -2 M46 24 l6 -2 M22 46 l-4 6 M38 46 l4 6" stroke="#111" stroke-width="2"/>
+          </svg>
+        </div>
+
+        <!-- striker badge -->
+        <div class="striker" id="strikerBadge" aria-hidden="true">
+          <span class="sflag" id="strikerFlag">🏳️</span>
+          <span class="sname" id="strikerName">—</span>
+        </div>
+
+        <div class="flash" id="flash" aria-hidden="true"><b id="flashText"></b><span id="flashSub"></span></div>
+        <div class="confetti" id="confetti" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- ===== CONSOLE ===== -->
+    <aside class="console">
+      <!-- your goat -->
+      <div class="card goatcard" id="goatCard">
+        <div class="gc-l">
+          <span class="gc-flag" id="gcFlag">🏳️</span>
+          <div>
+            <div class="gc-name" id="gcName">Pick your GOAT</div>
+            <div class="gc-sub" id="gcSub">Tap to choose</div>
+          </div>
+        </div>
+        <button class="btn ghost sm" id="changeGoat">Change</button>
+      </div>
+
+      <div class="card" id="balCard" hidden>
+        <div class="bal"><span id="balVal">0.000</span> <small>◎</small></div>
+        <div class="net-toggle" id="netToggle" hidden>
+          <button data-net="devnet" class="on">🧪 Devnet</button>
+          <button data-net="mainnet">🔴 Mainnet</button>
+        </div>
+      </div>
+
+      <!-- bet -->
+      <div class="card">
+        <div class="sides">
+          <button class="side goal on" id="sideGoal"><b>GOAL</b><span>scores ×1.98</span></button>
+          <button class="side miss" id="sideMiss"><b>MISS</b><span>saved ×1.98</span></button>
+        </div>
+        <div class="stake">
+          <input id="stakeInput" type="number" min="0" step="0.01" value="0.10" inputmode="decimal" />
+          <span>◎</span>
+        </div>
+        <div class="chips">
+          <button class="chip" data-chip="0.05">0.05</button>
+          <button class="chip" data-chip="0.1">0.10</button>
+          <button class="chip" data-chip="0.25">0.25</button>
+          <button class="chip" data-op="2x">2×</button>
+          <button class="chip" data-op="max">MAX</button>
+        </div>
+        <div class="zonebet" id="zonebet">
+          <label><span class="switch" id="zbSwitch"></span> 🎯 Corner bet ×9.9 — <span id="zbPick">pick on goal</span></label>
+          <div class="stake" id="zoneWrap" hidden>
+            <input id="zoneInput" type="number" min="0" step="0.01" value="0.05" inputmode="decimal" /><span>◎</span>
+          </div>
+        </div>
+        <div class="readout">
+          <div><span>Stake</span><b id="totalBet">0.100 ◎</b></div>
+          <div class="tw"><span>To win</span><b id="toWin">0.198 ◎</b></div>
+        </div>
+        <button class="btn lime kick" id="kickBtn">⚽ SHOOT</button>
+        <p class="msg" id="msg"></p>
+      </div>
+
+      <!-- GOAT standings -->
+      <div class="card standings">
+        <h3>🐐 GOAT Standings <small>global goals</small></h3>
+        <div class="st-row"><span class="st-name r">🇵🇹 Ronaldo</span><b id="stR">0</b></div>
+        <div class="st-track"><i id="stBar" class="r"></i></div>
+        <div class="st-row"><span class="st-name m">🇦🇷 Messi</span><b id="stM">0</b></div>
+        <p class="st-note" id="stNote">Every goal you score adds to your GOAT.</p>
+      </div>
+
+      <!-- session -->
+      <div class="card">
+        <h3>📊 Your Session</h3>
+        <div class="stat-grid">
+          <div><b id="stShots">0</b><span>Shots</span></div>
+          <div><b id="stGoals">0</b><span>Goals</span></div>
+          <div><b id="stStreak">0</b><span>Streak</span></div>
+          <div><b id="stPnl">0.00</b><span>P/L ◎</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🧾 History</h3>
+        <div class="feed" id="feed"><p class="feed-empty">No shots yet — pick your spot.</p></div>
+      </div>
+
+      <p class="beta-banner" id="betaBanner">⚠ BETA — free credits, provably-fair. On-chain SOL (Devnet + Mainnet) activates when the server is configured.</p>
+    </aside>
+  </main>
+
+  <!-- ===== INTRO: WHO IS THE GOAT ===== -->
+  <div class="overlay open" id="intro">
+    <div class="intro-card">
+      <div class="intro-step on" data-step="0">
+        <p class="kick">The eternal debate</p>
+        <h1>WHO IS THE <span class="gold">GOAT?</span></h1>
+        <div class="vs">
+          <button class="goatpick r" data-goat="ronaldo">
+            <span class="gp-emoji">🐐</span><b>RONALDO</b><small>CR7 · 🇵🇹</small>
+          </button>
+          <span class="vstext">VS</span>
+          <button class="goatpick m" data-goat="messi">
+            <span class="gp-emoji">🐐</span><b>MESSI</b><small>LM10 · 🇦🇷</small>
+          </button>
+        </div>
+        <p class="intro-hint">Pick your GOAT — you'll take the penalties as them.</p>
+      </div>
+
+      <div class="intro-step" data-step="1">
+        <p class="kick">Represent</p>
+        <h1>PICK YOUR <span class="gold">COUNTRY</span></h1>
+        <div class="country-grid" id="countryGrid"></div>
+        <button class="btn lime big" id="introDone" disabled>ENTER THE ARENA ⚽</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CELEBRATION ===== -->
+  <div class="overlay celebrate" id="celebrate">
+    <div class="celebrate-inner">
+      <div class="cel-emoji" id="celEmoji">🐐</div>
+      <h1 class="cel-title" id="celTitle">GOAAAL!</h1>
+      <p class="cel-line" id="celLine"></p>
+      <div class="cel-flag" id="celFlag">🏳️</div>
+    </div>
+  </div>
+
+  <!-- ===== LEADERBOARD ===== -->
+  <div class="overlay" id="lbModal">
+    <div class="modal">
+      <div class="modal-head"><h2>🏆 Leaderboard</h2><button class="x" data-close="lbModal">✕</button></div>
+      <div class="toggle2"><button class="on" id="lbProfit">Profit</button><button id="lbGoals">Goals</button></div>
+      <table class="lb"><thead><tr><th>#</th><th>Player</th><th>GOAT</th><th id="lbCol">Profit</th></tr></thead><tbody id="lbBody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ===== ACCOUNT ===== -->
+  <div class="overlay" id="accModal">
+    <div class="modal">
+      <div class="modal-head"><h2>Account</h2><button class="x" data-close="accModal">✕</button></div>
+      <div class="tabs"><button class="tab on" data-tab="profile">Profile</button><button class="tab" data-tab="deposit">Deposit</button><button class="tab" data-tab="withdraw">Withdraw</button></div>
+      <div class="pane on" id="pane-profile">
+        <div class="accbox"><div class="lbl">Balance</div><div class="big"><span id="accBal">0.000</span> ◎</div><p class="muted" id="accAddr">—</p></div>
+        <p class="lbl">Display handle</p>
+        <div class="row2"><input class="field" id="handleInput" maxlength="20" placeholder="GoatChaser" /><button class="btn ghost sm" id="saveHandle">Save</button></div>
+        <button class="btn red full" id="logoutBtn">Log out</button>
+        <p class="msg" id="profileMsg"></p>
+      </div>
+      <div class="pane" id="pane-deposit">
+        <div id="depLive" hidden>
+          <div class="accbox"><div class="lbl">Your deposit address</div><p class="addr" id="depAddr">—</p><button class="btn ghost sm" id="copyDep">⧉ Copy</button></div>
+          <ul class="notes"><li>✓ Any wallet/exchange — the address identifies you.</li><li>⚠ Native SOL only · min 0.01 ◎.</li></ul>
+          <button class="btn lime full" id="checkDepBtn">⟳ Already sent? Check now</button>
+        </div>
+        <div id="depBeta">
+          <div class="lock">🔒 On-chain deposits open when the server is live. For now, claim free credits.</div>
+          <button class="btn lime full" id="grantBtn">🎁 Claim 1.000 ◎ demo credits</button>
+        </div>
+        <p class="msg" id="depositMsg"></p>
+      </div>
+      <div class="pane" id="pane-withdraw">
+        <p class="lbl">Destination</p><input class="field" id="wdDest" placeholder="Connected wallet" />
+        <p class="lbl">Amount (◎) — min 0.005</p><input class="field" id="wdAmount" type="number" step="0.01" value="0.50" />
+        <button class="btn lime full" id="wdBtn">Request withdrawal</button>
+        <p class="msg" id="withdrawMsg"></p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <p>GoatFC is an entertainment game. Not affiliated with any player. 18+. Play responsibly. Betting may be regulated in your region.</p>
+    <p>© <span id="year">2026</span> goatfc.fun · Who is the GOAT?</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
