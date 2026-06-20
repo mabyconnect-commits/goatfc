@@ -276,8 +276,12 @@ button{font-family:inherit;cursor:pointer}
 .gp-hist-head{display:flex;align-items:center;justify-content:space-between;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.45rem}
 .gp-more{background:none;border:0;color:var(--gold);font-size:.72rem;text-decoration:underline;cursor:pointer;text-transform:none;letter-spacing:0}
 .gp-hist-list{display:grid;gap:5px}
-.gp-hrow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:.82rem;border:1px solid var(--line);border-radius:8px;padding:.35rem .6rem;background:rgba(0,0,0,.2)}
+
+.gp-hrow{display:grid;grid-template-columns:auto auto 1fr auto;gap:8px;align-items:center;font-size:.82rem;border:1px solid var(--line);border-radius:8px;padding:.35rem .6rem;background:rgba(0,0,0,.2)}
 .gp-hr{color:var(--muted);font-family:var(--disp)}
 .gp-ho{font-family:var(--disp);font-size:.8rem}.gp-ho.g{color:var(--green)}.gp-ho.s{color:var(--r)}
 .gp-hz{color:var(--ink-soft);text-align:right;font-size:.76rem}
 .gp-hempty{color:var(--muted);font-size:.8rem;text-align:center;padding:.4rem}
+.gp-players{font-size:.78rem;color:var(--ink-soft);margin-bottom:.6rem}
+.gp-players b{color:var(--gold);font-family:var(--disp)}
+.gp-hp{color:var(--muted);font-size:.72rem;text-align:right}

@@ -13,12 +13,17 @@ module.exports = async (req, res) => {
     const round = fc.gpRoundNow();
     const pool = await fc.gpGetPool(net);
     const recent = [];
-    for (let r = round - 1; r >= round - 20 && r >= 0; r--) { const o = fc.gpOutcome(net, r); recent.push({ round: r, side: o.side, land: o.land }); }
+    for (let r = round - 1; r >= round - 20 && r >= 0; r--) {
+      const o = fc.gpOutcome(net, r);
+      let players = 0; try { players = await fc.kv().llen(fc.gpBetsKey(net, r)); } catch (_) {}
+      recent.push({ round: r, side: o.side, land: o.land, players });
+    }
+    let roundPlayers = 0; try { roundPlayers = await fc.kv().llen(fc.gpBetsKey(net, round)); } catch (_) {}
     let tokens = 0; const addr = req.query && req.query.address;
     if (fc.isAddress(addr)) tokens = await fc.gpGetTokens(net, addr);
     // NOTE: the split-vs-winner mode is intentionally NOT exposed before the drop
     // — no one can know it until the jackpot actually fires.
-    return res.status(200).json({ ok: true, network: net, round, secondsLeft: fc.gpSecondsLeft(), poolPerRound: fc.GP.POOL_PER_ROUND, pool, tokens, recent });
+    return res.status(200).json({ ok: true, network: net, round, secondsLeft: fc.gpSecondsLeft(), poolPerRound: fc.GP.POOL_PER_ROUND, pool, tokens, roundPlayers, recent });
   } catch (e) {
     return res.status(500).json({ ok: false, error: "round_failed", detail: String(e) });
   }
