@@ -466,17 +466,21 @@
   function gpRender() { gpEl.pool.textContent = Math.round(gpData.pool).toLocaleString(); gpEl.tok.textContent = (Math.round((gpData.tokens || 0) * 100) / 100).toLocaleString(); }
   function gpTimerTick() { gpEl.timer.textContent = "0:" + String(gpLeft()).padStart(2, "0"); }
 
-  // play the round's result in the stadium (same visuals as an individual shot)
-  async function gpAnimateOutcome(outcome, land, win) {
-    if (busy) return;            // don't interrupt an individual shot
+  // play the round's result in the stadium (same visuals as an individual shot).
+  // win = the player's pick hit (gets the celebration); scroll = bring pitch into view.
+  async function gpAnimateOutcome(outcome, land, win, scroll) {
+    if (busy) return;            // don't interrupt an individual shot / overlap GP rounds
     busy = true;
-    try { el.stadium.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) {}
+    if (scroll) { try { el.stadium.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) {} }
     resetScene();
     el.ball.classList.add("spin");
     await new Promise((res) => setTimeout(res, 1200)); // brief build-up
     await animate(outcome, land);
-    showFlash(outcome, win, false);
-    if (outcome === "goal") { confettiBurst(); setTimeout(celebrate, 350); }
+    el.flash.className = "flash show " + outcome;
+    el.flashText.textContent = outcome === "goal" ? "GOAL!" : "SAVE! 🧤";
+    el.flashSub.textContent = "";
+    if (outcome === "goal") confettiBurst();
+    if (win) setTimeout(celebrate, 350);
     setTimeout(() => { el.flash.className = "flash"; resetScene(); busy = false; }, 1700);
   }
 
@@ -506,7 +510,7 @@
       renderAll(); save(); gpSaveLocal();
       gpStatus(win ? `${side === "goal" ? "GOAL" : "SAVE"}! +${fmt(net)} ◎` : `${side === "goal" ? "GOAL" : "SAVE"} — ${fmt(net)} ◎`, win ? "ok" : "err");
       if (jpMsg) gpStatus(jpMsg, "jackpot");
-      gpAnimateOutcome(side, land, win); // show it in the stadium
+      gpAnimateOutcome(side, land, win, true); // show it in the stadium (scroll, since they played)
     }
     renderGpHistory();
     gpPending = null; gpEl.join.disabled = false; gpRender();
@@ -525,7 +529,7 @@
     const p = gpPending;
     try { const d = await API.post("/api/goat-account", {}); if (d.ok) { applyAccount(d.account); renderAll(); } } catch (_) {}
     await gpPoll();
-    if (p) { const o = (gpRecent || []).find((x) => x.round === p.round); if (o) gpAnimateOutcome(o.side, o.land, o.side === p.side); }
+    if (p) { const o = (gpRecent || []).find((x) => x.round === p.round); if (o) gpAnimateOutcome(o.side, o.land, o.side === p.side, true); }
     gpPending = null; gpEl.join.disabled = false;
   }
 
@@ -534,8 +538,15 @@
     const cur = gpRound();
     if (cur !== gpData.lastRound) {
       if (!API.live) { const elapsed = Math.min(cur - gpData.lastRound, 5); gpData.pool += GP_POOL_PER * elapsed; }
+      const finished = cur - 1;
       gpData.lastRound = cur; gpSaveLocal(); gpRender(); gpRenderMode(); renderGpHistory();
-      if (gpPending && gpPending.round < cur) { API.live ? gpRefreshLive() : gpResolveBeta(gpPending.round); }
+      if (gpPending && gpPending.round < cur) {
+        API.live ? gpRefreshLive() : gpResolveBeta(gpPending.round); // settles + animates (scrolls)
+      } else if (finished >= 0) {
+        // spectator: play every round's result too (no forced scroll)
+        if (API.live) gpPoll().then(() => { const o = (gpRecent || []).find((x) => x.round === finished); if (o) gpAnimateOutcome(o.side, o.land, false, false); });
+        else gpOutcome(finished).then((o) => gpAnimateOutcome(o.side, o.land, false, false));
+      }
     }
     if (API.live && Date.now() - gpLastPoll > 5000) { gpLastPoll = Date.now(); gpPoll(); }
   }
