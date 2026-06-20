@@ -9,6 +9,8 @@ module.exports = async (req, res) => {
     configured: c.configured,
     networks: fc.NETWORKS,
     defaultNetwork: "devnet",
+    goatUsd: Number(process.env.GOAT_USD || 0.1), // indicative GOAT→USD rate
+
     econ: {
       mainMult: fc.ECON.MAIN_MULT, zoneMult: fc.ECON.ZONE_MULT,
       minBet: fc.ECON.MIN_BET, maxBet: fc.ECON.MAX_BET,

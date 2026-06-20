@@ -285,3 +285,4 @@ button{font-family:inherit;cursor:pointer}
 .gp-players{font-size:.78rem;color:var(--ink-soft);margin-bottom:.6rem}
 .gp-players b{color:var(--gold);font-family:var(--disp)}
 .gp-hp{color:var(--muted);font-size:.72rem;text-align:right}
+.gp-usd{display:block;font-size:.74rem;color:var(--m);font-family:var(--body);font-weight:600;margin-top:1px}

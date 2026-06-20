@@ -75,9 +75,9 @@
 
   /* ============================================================ backend */
   const API = {
-    live: false, token: null, deposit: null, network: localStorage.getItem("goatfc:net") || "devnet",
+    live: false, token: null, deposit: null, goatUsd: 0.1, network: localStorage.getItem("goatfc:net") || "devnet",
     setNet(n) { this.network = n === "mainnet" ? "mainnet" : "devnet"; localStorage.setItem("goatfc:net", this.network); },
-    async detect() { try { const d = await (await fetch("/api/goat-config")).json(); this.live = !!d.configured; } catch (_) { this.live = false; } return this.live; },
+    async detect() { try { const d = await (await fetch("/api/goat-config")).json(); this.live = !!d.configured; if (d && d.goatUsd) this.goatUsd = d.goatUsd; } catch (_) { this.live = false; } return this.live; },
     async post(p, x) { const r = await fetch(p, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address, token: this.token, network: this.network, ...x }) }); return r.json(); },
     async login() {
       const c = await this.post("/api/goat-challenge", {}); if (!c.ok) throw new Error(c.error || "challenge");
@@ -414,7 +414,7 @@
 
   /* ============================================================ GENERAL PENALTY */
   const GP_ROUND = 30, GP_POOL_PER = 2, GP_SEED = "goatfc-general-penalty-v1", GP_ROUNDS_PER_DAY = 2880;
-  const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), history: $("#gpHistory"), more: $("#gpMore"), mode: $("#gpMode"), players: $("#gpPlayers"), wager: $("#gpWager") };
+  const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), history: $("#gpHistory"), more: $("#gpMore"), mode: $("#gpMode"), players: $("#gpPlayers"), wager: $("#gpWager"), poolUsd: $("#gpPoolUsd") };
   let gpMode = "split"; // today's drop mode: "split" | "winner"
   let gpRecent = [], gpHistExpanded = false, gpCurPlayers = 0, gpCurWager = 0;
   async function renderGpHistory() {
@@ -463,7 +463,11 @@
     gpEl.mode.textContent = "🎁 Daily drop: 🤝 SPLIT or 👑 1 WINNER — revealed at the drop";
   }
   const gpStatus = (t, c) => { gpEl.status.textContent = t; gpEl.status.className = "gp-status " + (c || ""); };
-  function gpRender() { gpEl.pool.textContent = Math.round(gpData.pool).toLocaleString(); gpEl.tok.textContent = (Math.round((gpData.tokens || 0) * 100) / 100).toLocaleString(); }
+  function gpRender() {
+    gpEl.pool.textContent = Math.round(gpData.pool).toLocaleString();
+    gpEl.tok.textContent = (Math.round((gpData.tokens || 0) * 100) / 100).toLocaleString();
+    gpEl.poolUsd.textContent = "≈ $" + (gpData.pool * (API.goatUsd || 0.1)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
   function gpTimerTick() { gpEl.timer.textContent = "0:" + String(gpLeft()).padStart(2, "0"); }
 
   // play the round's result in the stadium (same visuals as an individual shot).
