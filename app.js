@@ -382,11 +382,11 @@
   }
   function gpHash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   function gpTrigger(r) { const day = Math.floor(r / 1440); return day * 1440 + (gpHash("jp" + day) % 1440); }
-  function gpModeFor(r) { const day = Math.floor(r / 1440); return (gpHash("jpmode" + day) % 2) ? "winner" : "split"; }
+  // mode is decided AT the trigger round and stays hidden until the drop fires
+  function gpModeFor(r) { return (gpHash("jpmode" + r) % 2) ? "winner" : "split"; }
   function gpRenderMode() {
-    gpMode = API.live ? gpMode : gpModeFor(gpRound());
-    gpEl.mode.className = "gp-mode " + gpMode;
-    gpEl.mode.textContent = gpMode === "winner" ? "🎁 Today's drop: 👑 ONE WINNER takes the pool" : "🎁 Today's drop: 🤝 SPLIT among all players";
+    gpEl.mode.className = "gp-mode";
+    gpEl.mode.textContent = "🎁 Daily drop: 🤝 SPLIT or 👑 1 WINNER — revealed at the drop";
   }
   const gpStatus = (t, c) => { gpEl.status.textContent = t; gpEl.status.className = "gp-status " + (c || ""); };
   function gpRender() { gpEl.pool.textContent = Math.round(gpData.pool).toLocaleString(); gpEl.tok.textContent = (Math.round((gpData.tokens || 0) * 100) / 100).toLocaleString(); }
@@ -427,7 +427,7 @@
     try {
       const q = address ? "&address=" + address : "";
       const d = await (await fetch(`/api/goat-round?network=${API.network}${q}`)).json();
-      if (d.ok) { gpData.pool = d.pool; if (typeof d.tokens === "number") gpData.tokens = d.tokens; if (d.jackpotMode) { gpMode = d.jackpotMode; gpRenderMode(); } gpRender();
+      if (d.ok) { gpData.pool = d.pool; if (typeof d.tokens === "number") gpData.tokens = d.tokens; gpRender();
         if (d.recent && d.recent[0]) { const o = d.recent[0]; gpEl.last.innerHTML = `Last round: <b class="${o.side === "goal" ? "g" : "s"}">${o.side === "goal" ? "GOAL" : "SAVE"}</b> → ${ZNAME[o.land]}`; } }
     } catch (_) {}
   }
