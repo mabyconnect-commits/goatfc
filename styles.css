@@ -68,7 +68,7 @@ button{font-family:inherit;cursor:pointer}
 @keyframes fl{from{transform:translateY(0);opacity:0}10%,90%{opacity:.8}to{transform:translateY(-26px);opacity:0}}
 .pitch{position:absolute;left:0;right:0;bottom:0;height:56%;background:repeating-linear-gradient(180deg,#0e3a1f 0 22px,#0a2c18 22px 44px);transform:perspective(620px) rotateX(46deg);transform-origin:bottom center}
 .pitch::after{content:"";position:absolute;left:50%;top:-2%;width:72%;height:46%;transform:translateX(-50%);border:2px solid rgba(233,247,233,.5);border-top:0;opacity:.45}
-.goal{position:absolute;top:15%;left:50%;transform:translateX(-50%);width:70%;aspect-ratio:16/9;border:7px solid #f4f4f4;border-bottom:0;border-radius:6px 6px 0 0;
+.stadium .goal{position:absolute;top:15%;left:50%;transform:translateX(-50%);width:70%;aspect-ratio:16/9;border:7px solid #f4f4f4;border-bottom:0;border-radius:6px 6px 0 0;
   background:linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(180deg,rgba(255,255,255,.05) 1px,transparent 1px) 0 0/22px 22px}
 .zones{position:absolute;top:15%;left:50%;transform:translateX(-50%);width:70%;aspect-ratio:16/9;z-index:5;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:4px;padding:6px;opacity:0;pointer-events:none;transition:.25s}
 .zones.on{opacity:1;pointer-events:auto}
