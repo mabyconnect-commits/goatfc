@@ -30,6 +30,9 @@ GOAT goal tallies). One treasury keypair works on both chains.
 | `SOLANA_RPC_DEVNET` | devnet RPC URL (default `https://api.devnet.solana.com`). |
 | `FC_MAX_BET` | *(optional)* max stake per bet in SOL (default 5). |
 | `FC_AUTO_WITHDRAW_MAX` | *(optional)* auto-send ceiling; above → review queue (default 2). |
+| `GOAT_MINT_DEVNET` | *(hybrid rewards)* base58 mint address of the $GOAT SPL token on devnet. Create with `scripts/create-goat-token.js`. |
+| `GOAT_MINT_MAINNET` | *(hybrid rewards)* base58 mint address of $GOAT on mainnet. |
+| `GOAT_USD` | *(optional)* indicative GOAT→USD rate shown beside the reward pool (default 0.1). |
 
 Also add an **Upstash Redis** database (Vercel Storage → Upstash → Redis). Use
 the **`KV`** custom prefix so it injects `KV_REST_API_URL` / `KV_REST_API_TOKEN`
@@ -41,6 +44,17 @@ the **`KV`** custom prefix so it injects `KV_REST_API_URL` / `KV_REST_API_TOKEN`
 node scripts/gen-keys.js                       # prints treasury + secrets
 BASE=https://goatfc.fun node scripts/smoke-devnet.js   # end-to-end devnet check
 ```
+
+## $GOAT reward token (hybrid)
+The daily General Penalty jackpot pays real $GOAT. Create the mint once per network:
+```bash
+RPC=https://api.devnet.solana.com MINT_AUTH=<treasury_base58> SUPPLY=100000000 \
+  node scripts/create-goat-token.js     # prints the mint → set GOAT_MINT_DEVNET
+```
+Single-winner drops transfer $GOAT on-chain from the treasury's token account to
+the winner (the treasury must hold a $GOAT balance + SOL for fees). Split drops
+accrue as a KV-claimable tally. Frontend goes LIVE automatically when
+`/api/goat-config` reports `configured:true`; until then it runs the local BETA sim.
 
 ## Before mainnet
 - Fund the treasury with SOL for payouts **and** fees.

@@ -1547,6 +1547,7 @@ class Component extends DCLogic {
       ballZone:null, keeperZone:null, scored:null, lastWin:0, lastZoneWin:0, zoneHit:false,
       flash:false,
       modal:null, accountTab:'profile', connected:false, muted:false,
+      live:false, token:null, address:null, depositAddr:null, net:'devnet', goatUsd:0.1, liveBusy:false,
       handle:'Maby', depAmt:0.5, wdAmt:0.5,
       ronaldoGoals:14827, messiGoals:14671,
       goatPool:18.642, poolSecs:2734, poolContributed:0.0428, poolWinning:'ronaldo',
@@ -1601,18 +1602,39 @@ class Component extends DCLogic {
   }
   fmt(n,d){ const x=Math.abs(n)<0.0001?0:n; return x.toFixed(d===undefined?2:d); }
   componentDidMount(){
+    this.detectLive();
+    this._tickN=0;
     this.poolTimer=setInterval(()=>{
+      this._tickN++;
+      if(this.state.live && this._tickN%3===0) this.gpPoll();
       this.setState(s=>{
         const pr=Math.max(0.001, s.goatPrice*(1+(Math.random()-0.42)*0.012));
         const patch={goatPrice:Math.round(pr*100000)/100000};
         if(s.bountySecs>0) patch.bountySecs=s.bountySecs-1;
-        Object.assign(patch, this.gpTick(s));
+        const tick=this.gpTick(s);
+        if(s.live){ ['balance','goatTokens','tokenPop','gpRewardPool','gpPlayers','gpWagered','gpLastDrop','gpDropFlash','gpMyBet','gpHistory','gpTriggerIn','gpRound'].forEach(k=>delete tick[k]); }
+        Object.assign(patch, tick);
         if(s.poolSecs<=1){ return Object.assign(this.runDraw(s), patch); }
         patch.poolSecs=s.poolSecs-1;
         return patch;
       });
     },1000);
   }
+  gpPoll=async()=>{
+    const s=this.state; if(!s.live) return;
+    try{
+      const q='/api/goat-round?network='+encodeURIComponent(s.net)+(s.address?('&address='+encodeURIComponent(s.address)):'');
+      const r=await fetch(q); const d=await r.json();
+      if(!d || !d.ok) return;
+      const patch={ gpRewardPool:d.pool, gpPlayers:d.roundPlayers, gpWagered:d.roundWagered };
+      if(typeof d.tokens==='number') patch.goatTokens=d.tokens;
+      if(Array.isArray(d.recent)) patch.gpHistory=d.recent.map(x=>({round:x.round, scored:x.side==='goal', zone:x.land, players:x.players, wagered:x.wagered}));
+      // new round on the server → reset my pick locally
+      if(d.round!==this.state.gpRound){ patch.gpRound=d.round; patch.gpMyBet=null; patch.gpPick=null; patch.gpZone=null; patch.gpResult=null; patch.gpPhase='betting'; }
+      patch.gpSecs=d.secondsLeft;
+      this.setState(patch);
+    }catch(e){}
+  };
   gpTick(s){
     const secs=s.gpSecs-1;
     const ZONES=['TL','TR','C','BL','BR'];
@@ -1671,6 +1693,17 @@ class Component extends DCLogic {
     const s=this.state;
     if(s.gpPhase!=='betting'||s.gpMyBet||!s.gpPick) return;
     if(s.gpStake>s.balance){ this.setState({modal:'account', accountTab:'deposit'}); return; }
+    if(s.live && s.token){
+      this.setState({ gpMyBet:{pick:s.gpPick, zone:s.gpZone, stake:s.gpStake, settled:false}, liveBusy:true });
+      this.api('goat-play',{address:s.address, token:s.token, network:s.net, side:s.gpPick, stake:s.gpStake, angle:s.gpZone, angleStake:s.gpZone?s.gpStake:0})
+        .then(r=>{
+          if(r&&r.ok){ this.applyAccount({balance:r.balance}); this.gpPoll(); }
+          else { this.setState({gpMyBet:null}); if(r&&r.error==='insufficient') this.setState({modal:'account', accountTab:'deposit'}); }
+        })
+        .catch(()=>this.setState({gpMyBet:null}))
+        .then(()=>this.setState({liveBusy:false}));
+      return;
+    }
     this.setState({ gpMyBet:{pick:s.gpPick, zone:s.gpZone, stake:s.gpStake, settled:false}, balance:Math.round((s.balance-s.gpStake)*1000)/1000, gpPlayers:s.gpPlayers+1, gpWagered:Math.round((s.gpWagered+s.gpStake)*100)/100 });
   };
   gpDismissDrop=()=>this.setState({gpDropFlash:false});
@@ -1875,7 +1908,50 @@ class Component extends DCLogic {
       const addr=pk.toString();
       this._wallet=prov;
       this.setState({connected:true, address:addr, handle:this.state.handle||(addr.slice(0,4)+'…'+addr.slice(-4))});
+      if(this.state.live) this.liveLogin(addr);
     }catch(e){}
+  };
+
+  /* ===== LIVE (hybrid backend) — gated; falls back to local sim when off ===== */
+  detectLive=async()=>{
+    try{
+      const r=await fetch('/api/goat-config'); const c=await r.json();
+      if(c && c.configured){ this.setState({live:true, net:c.defaultNetwork||'devnet', goatUsd:Number(c.goatUsd)||0.1}); }
+    }catch(e){}
+  };
+  api=async(path,b)=>{
+    const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+    return await r.json();
+  };
+  b58=(bytes)=>{
+    const A='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let d=[0];
+    for(let i=0;i<bytes.length;i++){ let c=bytes[i]; for(let j=0;j<d.length;j++){ c+=d[j]<<8; d[j]=c%58; c=(c/58)|0; } while(c){ d.push(c%58); c=(c/58)|0; } }
+    let str=''; for(let i=0;i<bytes.length && bytes[i]===0;i++) str+='1';
+    for(let i=d.length-1;i>=0;i--) str+=A[d[i]];
+    return str;
+  };
+  liveLogin=async(addr)=>{
+    try{
+      const net=this.state.net;
+      const ch=await this.api('goat-challenge',{address:addr, network:net});
+      if(!ch || !ch.ok) return;
+      const sig=await this._wallet.signMessage(new TextEncoder().encode(ch.message), 'utf8');
+      const bytes=sig && sig.signature ? sig.signature : sig;
+      const lg=await this.api('goat-login',{address:addr, network:net, nonce:ch.nonce, signature:this.b58(bytes)});
+      if(lg && lg.ok){ this.setState({token:lg.token}); this.applyAccount(lg.account); }
+    }catch(e){}
+  };
+  applyAccount=(a)=>{
+    if(!a) return; const patch={};
+    if(typeof a.balance==='number') patch.balance=a.balance;
+    if(a.depositAddress) patch.depositAddr=a.depositAddress;
+    if(a.handle) patch.handle=a.handle;
+    this.setState(patch);
+  };
+  refreshAccount=async()=>{
+    const s=this.state; if(!s.live||!s.token) return;
+    try{ const r=await this.api('goat-account',{address:s.address, token:s.token, network:s.net}); if(r&&r.ok) this.applyAccount(r.account); }catch(e){}
   };
   pickGoalBet=()=>this.setState({pick:'goal'});
   pickMissBet=()=>this.setState({pick:'miss', zone:null});
@@ -1887,13 +1963,34 @@ class Component extends DCLogic {
   onStakeBlur=()=>{ let n=parseFloat(this.state.stakeInput); if(isNaN(n)||n<0.01)n=0.01; if(n>this.state.balance)n=this.state.balance; n=Math.round(n*100)/100; this.setState({stake:n, stakeInput:n.toFixed(2)}); };
   setDep=(v)=>this.setState({depAmt:v});
   setWd=(v)=>this.setState({wdAmt:v});
-  doDeposit=()=>{ this.setState(s=>({balance:Math.round((s.balance+s.depAmt)*1000)/1000, modal:null})); };
-  doWithdraw=()=>{ this.setState(s=>({balance:Math.round((Math.max(0,s.balance-s.wdAmt))*1000)/1000, modal:null})); };
+  doDeposit=()=>{
+    const s=this.state;
+    if(s.live && s.token){
+      this.setState({liveBusy:true});
+      this.api('goat-deposit-check',{address:s.address, token:s.token, network:s.net})
+        .then(r=>{ if(r&&r.ok) this.applyAccount(r.account||{balance:r.balance}); })
+        .catch(()=>{}).then(()=>this.setState({liveBusy:false}));
+      return;
+    }
+    this.setState(s=>({balance:Math.round((s.balance+s.depAmt)*1000)/1000, modal:null}));
+  };
+  doWithdraw=()=>{
+    const s=this.state;
+    if(s.live && s.token){
+      this.setState({liveBusy:true});
+      this.api('goat-withdraw',{address:s.address, token:s.token, network:s.net, destination:s.address, amount:s.wdAmt})
+        .then(r=>{ if(r&&r.ok){ this.applyAccount({balance:r.balance}); this.setState({modal:null}); } })
+        .catch(()=>{}).then(()=>this.setState({liveBusy:false}));
+      return;
+    }
+    this.setState(s=>({balance:Math.round((Math.max(0,s.balance-s.wdAmt))*1000)/1000, modal:null}));
+  };
 
   strike=()=>{
     const s=this.state;
     if(s.phase!=='aim') return;
     if(s.stake>s.balance){ this.setState({modal:'account', accountTab:'deposit'}); return; }
+    if(s.live && s.token){ return this.liveStrike(); }
     const ballZone = s.zone || this.ZONES[Math.floor(Math.random()*5)];
     const keeperZone = this.ZONES[Math.floor(Math.random()*5)];
     let scored = keeperZone!==ballZone;
@@ -1904,6 +2001,25 @@ class Component extends DCLogic {
     this.setState({phase:'runup', ballZone, keeperZone, scored, balance:Math.round((s.balance-s.stake)*1000)/1000, goatPool:Math.round((s.goatPool+fee)*1000)/1000, poolContributed:Math.round((s.poolContributed+fee)*10000)/10000, buybackSol:Math.round((s.buybackSol+bb)*1000)/1000, goatBurned:s.goatBurned+Math.round(bb/s.goatPrice*100)});
     setTimeout(()=>{ if(this.state.phase==='runup'){ this.setState({phase:'shooting'}); } }, 330);
     setTimeout(()=>this.impact(), 330+760);
+  };
+  liveStrike=async()=>{
+    const s=this.state;
+    this.setState({liveBusy:true});
+    try{
+      const r=await this.api('goat-bet',{address:s.address, token:s.token, network:s.net, side:s.pick, stake:s.stake, zone:s.zone, zoneStake:s.zone?s.stake:0, goat:s.goat});
+      if(!r || !r.ok){ if(r&&r.error==='insufficient') this.setState({modal:'account', accountTab:'deposit'}); return; }
+      const scored = r.outcome==='goal';
+      const ballZone = r.land || s.zone || this.ZONES[Math.floor(Math.random()*5)];
+      const keeperZone = scored ? (this.ZONES.find(z=>z!==ballZone)||ballZone) : ballZone;
+      // server is authoritative for balance + GOAT standings; stash for resolve()
+      this._liveResult = { account:r.account, goatStats:r.goatStats };
+      const fee=Math.round(s.stake*0.02*1000)/1000, bb=fee;
+      if(s.soundOn) this.playClip('penalty.mp3');
+      this.setState({phase:'runup', ballZone, keeperZone, scored, goatPool:Math.round((s.goatPool+fee)*1000)/1000, poolContributed:Math.round((s.poolContributed+fee)*10000)/10000, buybackSol:Math.round((s.buybackSol+bb)*1000)/1000});
+      setTimeout(()=>{ if(this.state.phase==='runup'){ this.setState({phase:'shooting'}); } }, 330);
+      setTimeout(()=>this.impact(), 330+760);
+    }catch(e){}
+    finally{ this.setState({liveBusy:false}); }
   };
   impact=()=>{
     const s=this.state;
@@ -1925,6 +2041,12 @@ class Component extends DCLogic {
     const newHist=[{t:'now',bet:s.pick==='goal'?'GOAL':'MISS',res:resTxt,pay,win:won},...s.history].slice(0,40);
     const patch={phase:'result', lastWin:totalRet, lastZoneWin:zoneWin, zoneHit, balance:Math.round((s.balance+totalRet)*1000)/1000, history:newHist};
     if(s.scored){ if(s.goat==='ronaldo') patch.ronaldoGoals=s.ronaldoGoals+1; else patch.messiGoals=s.messiGoals+1; }
+    // live: trust the server for balance + global GOAT standings
+    if(this._liveResult){
+      const lr=this._liveResult; this._liveResult=null;
+      if(lr.account && typeof lr.account.balance==='number') patch.balance=lr.account.balance;
+      if(lr.goatStats){ if(typeof lr.goatStats.ronaldo==='number') patch.ronaldoGoals=lr.goatStats.ronaldo; if(typeof lr.goatStats.messi==='number') patch.messiGoals=lr.goatStats.messi; }
+    }
     this.setState(patch);
   };
   nextShot=()=>this.setState({phase:'aim', ballZone:null, keeperZone:null, scored:null, lastWin:0, lastZoneWin:0, zoneHit:false, flash:false});
