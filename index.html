@@ -1033,20 +1033,21 @@
                 </div>
               </sc-for>
             </div>
-            <!-- the spot (mini pitch) -->
+            <!-- the spot (mini pitch) — animated shot, keeper dive, then reveal -->
             <div style="position:relative;height:150px;border-radius:15px;overflow:hidden;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,#0a1a12,#0e2c1b);margin-bottom:13px;">
               <div style="position:absolute;top:16px;left:14%;right:14%;height:74px;border:4px solid rgba(255,255,255,.85);border-bottom:none;border-radius:4px 4px 0 0;background:repeating-linear-gradient(0deg,transparent 0 9px,rgba(255,255,255,.08) 9px 10px),repeating-linear-gradient(90deg,transparent 0 9px,rgba(255,255,255,.08) 9px 10px);"></div>
+              <!-- keeper (dives to its zone) -->
+              <div style="position:absolute;left:{{ gpKeeperLeft }}%;top:{{ gpKeeperTop }}px;transform:translate(-50%,-50%);font-size:24px;z-index:2;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));transition:left .45s ease,top .45s ease;">🧤</div>
+              <!-- ball (flies from the spot to its zone) -->
+              <div style="position:absolute;left:{{ gpBallLeft }}%;top:{{ gpBallTop }}px;width:{{ gpBallSize }}px;height:{{ gpBallSize }}px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#cdd3da 70%);box-shadow:0 2px 6px rgba(0,0,0,.5);transform:translate(-50%,-50%);z-index:3;transition:left .55s cubic-bezier(.25,.6,.2,1),top .55s cubic-bezier(.25,.6,.2,1),width .55s ease;"></div>
               <sc-if value="{{ gpReveal }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,16,11,.55);">
-                  <div style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:34px;color:{{ gpResColor }};text-shadow:0 0 20px {{ gpResColor }};animation:gfcGoalText .5s ease both;">{{ gpResLabel }}</div>
-                  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#cfd8e6;font-weight:700;margin-top:2px;">{{ gpResZone }}</div>
+                <div style="position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;align-items:center;padding-top:8px;z-index:4;">
+                  <div style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:30px;color:{{ gpResColor }};text-shadow:0 0 20px {{ gpResColor }};animation:gfcGoalText .5s ease both;">{{ gpResLabel }}</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#cfd8e6;font-weight:700;margin-top:1px;">{{ gpResZone }}</div>
                 </div>
               </sc-if>
               <sc-if value="{{ gpPhaseBetting }}" hint-placeholder-val="{{ true }}">
-                <div style="position:absolute;left:50%;bottom:14px;transform:translateX(-50%);text-align:center;">
-                  <div style="width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#cdd3da 70%);margin:0 auto 6px;box-shadow:0 3px 7px rgba(0,0,0,.5);"></div>
-                  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9fb0c0;">ball on the spot…</div>
-                </div>
+                <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;color:#9fb0c0;">ball on the spot…</div>
               </sc-if>
             </div>
 
@@ -1646,12 +1647,19 @@ class Component extends DCLogic {
         gpDropFlash:false
       };
     }
-    // reveal moment (10s left): compute the ONE shared result
+    // shot fired (8s left): lock the ONE shared result; ball flies + keeper dives
     if(s.gpPhase==='betting' && secs<=8){
       const ballZone=ZONES[Math.floor(Math.random()*5)];
       const keeperZone=ZONES[Math.floor(Math.random()*5)];
       let scored=keeperZone!==ballZone; if(Math.random()<0.12) scored=false;
-      const out={ gpSecs:secs, gpPhase:'reveal', gpResult:{scored, zone:ballZone, keeperZone} };
+      if(s.soundOn) this.playClip('penalty.mp3');
+      return { gpSecs:secs, gpPhase:'shooting', gpResult:{scored, zone:ballZone, keeperZone} };
+    }
+    // reveal (after ~2s of flight): show GOAL/SAVE, settle bets, run the drop
+    if(s.gpPhase==='shooting' && secs<=6 && s.gpResult){
+      const ballZone=s.gpResult.zone, keeperZone=s.gpResult.keeperZone, scored=s.gpResult.scored;
+      const out={ gpSecs:secs, gpPhase:'reveal', gpResult:s.gpResult };
+      if(scored && s.soundOn){ this.stopClip('penalty.mp3'); }
       out.gpHistory=[{round:s.gpRound, scored, zone:ballZone, players:s.gpPlayers, wagered:s.gpWagered},...(s.gpHistory||[])].slice(0,20);
       // settle my bet
       if(s.gpMyBet){
@@ -2347,6 +2355,15 @@ class Component extends DCLogic {
     const gpBetting=s.gpPhase==='betting' && !s.gpMyBet && s.gpSecs>10;
     const gpLocked=!!s.gpMyBet;
     const gpReveal=s.gpPhase==='reveal' && !!s.gpResult;
+    const gpShot=(s.gpPhase==='shooting'||s.gpPhase==='reveal') && !!s.gpResult;
+    // mini-pitch ball + keeper positions (percent left, px top within the 150px pitch)
+    const GPOS={TL:{l:30,t:38},TR:{l:70,t:38},C:{l:50,t:52},BL:{l:31,t:74},BR:{l:69,t:74}};
+    let gpBallLeft=50, gpBallTop=122, gpBallSize=18, gpKeeperLeft=50, gpKeeperTop=58;
+    if(gpShot){
+      const bp=GPOS[s.gpResult.zone]||GPOS.C, kp=GPOS[s.gpResult.keeperZone]||GPOS.C;
+      gpBallLeft=bp.l; gpBallTop=bp.t; gpBallSize=12;
+      gpKeeperLeft=kp.l; gpKeeperTop=kp.t;
+    }
     const gpZones=['TL','TR','C','BL','BR'].map(z=>{
       const sel=s.gpZone===z;
       return {key:z,label:z,name:ZN[z],
@@ -2420,7 +2437,8 @@ class Component extends DCLogic {
       // ===== General Penalty =====
       isGeneral:s.screen==='general', goGeneral:this.goGeneral,
       gpRoundTxt:'#'+s.gpRound.toLocaleString(), gpClock,
-      gpPhaseBetting:gpBetting, gpLocked, gpReveal,
+      gpPhaseBetting:s.gpPhase==='betting', gpLocked, gpReveal, gpShot,
+      gpBallLeft, gpBallTop, gpBallSize, gpKeeperLeft, gpKeeperTop,
       gpClockPct: Math.round(s.gpSecs/30*100),
       gpPickGoalSel: s.gpPick==='goal', gpPickSaveSel: s.gpPick==='save',
       gpSelectGoal:()=>this.gpSelect('goal'), gpSelectSave:()=>this.gpSelect('save'),
