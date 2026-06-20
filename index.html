@@ -981,7 +981,7 @@
         <div style="position:relative;flex:1;display:block;overflow-y:auto;background:radial-gradient(120% 60% at 50% 0%,#10233a 0%,#06101b 55%);">
           <div style="display:flex;align-items:center;gap:10px;padding:13px 16px 6px;">
             <div onClick="{{ goHome }}" style="display:flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);cursor:pointer;font-size:12px;font-weight:700;color:#cfd8e6;">‹ Back</div>
-            <div style="flex:1;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:5px;"><span style="font-size:15px;">🐐</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#c6f024;">{{ goatTokensTxt }}</span></div>
+            <div style="flex:1;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:5px;"><span style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:11px;color:#c6f024;letter-spacing:.3px;">$GOAT</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#c6f024;">{{ goatTokensTxt }}</span></div>
           </div>
 
           <div style="padding:2px 16px 24px;">
@@ -994,18 +994,16 @@
               <h2 style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:22px;color:#fff;margin:0;letter-spacing:-.4px;">GENERAL PENALTY</h2>
             </div>
 
-            <!-- round clock + players -->
-            <div style="display:flex;gap:9px;margin-bottom:12px;">
-              <div style="flex:1.4;position:relative;overflow:hidden;border-radius:15px;background:linear-gradient(135deg,#13243d,#0c1830);border:1.5px solid rgba(95,160,255,.35);padding:13px 15px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;">
-                  <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#7d8aa0;letter-spacing:1px;">ROUND {{ gpRoundTxt }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:800;color:#fff;line-height:1;">{{ gpClock }}</div></div>
-                  <div style="text-align:right;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#7d8aa0;letter-spacing:1px;">PLAYERS</div><div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;color:#5fa0ff;">{{ gpPlayersTxt }}</div></div>
-                </div>
-                <div style="height:5px;border-radius:3px;background:#0a0f18;overflow:hidden;margin-top:10px;"><div style="width:{{ gpClockPct }}%;height:100%;background:linear-gradient(90deg,#5fa0ff,#c6f024);transition:width .9s linear;"></div></div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#7d8aa0;margin-top:6px;">{{ gpStatusTxt }}</div>
+            <!-- round clock + reward pool -->
+            <div style="display:flex;gap:9px;margin-bottom:9px;align-items:stretch;">
+              <div style="flex:1;position:relative;overflow:hidden;border-radius:15px;background:linear-gradient(135deg,#13243d,#0c1830);border:1.5px solid rgba(95,160,255,.35);padding:11px 13px;display:flex;flex-direction:column;justify-content:center;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#7d8aa0;letter-spacing:1px;">ROUND {{ gpRoundTxt }}</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;color:#fff;line-height:1.05;">{{ gpClock }}</div>
+                <div style="height:5px;border-radius:3px;background:#0a0f18;overflow:hidden;margin-top:8px;"><div style="width:{{ gpClockPct }}%;height:100%;background:linear-gradient(90deg,#5fa0ff,#c6f024);transition:width .9s linear;"></div></div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#7d8aa0;margin-top:5px;">{{ gpStatusTxt }}</div>
               </div>
-              <div onClick="{{ openGpPool }}" style="flex:1;position:relative;overflow:hidden;border-radius:15px;background:linear-gradient(135deg,#1a2410,#0c1606);border:1.5px solid rgba(198,240,36,.4);padding:13px;display:flex;flex-direction:column;justify-content:center;">
-                <div style="font-size:18px;">🐐</div>
+              <div onClick="{{ openGpPool }}" style="flex:1;position:relative;overflow:hidden;border-radius:15px;background:linear-gradient(135deg,#1a2410,#0c1606);border:1.5px solid rgba(198,240,36,.4);padding:11px 13px;display:flex;flex-direction:column;justify-content:center;">
+                <div style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:13px;color:#c6f024;letter-spacing:.3px;">$GOAT</div>
                 <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#9fb0a0;letter-spacing:.5px;margin-top:3px;">REWARD POOL</div>
                 <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:#c6f024;line-height:1;">{{ gpRewardPoolTxt }}</div>
                 <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#7d8aa0;margin-top:2px;">+2 / round · drops daily</div>
@@ -1016,7 +1014,7 @@
             <div style="display:flex;gap:9px;margin-bottom:10px;">
               <div style="flex:1;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:9px 12px;">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#7d8aa0;letter-spacing:.5px;">TOTAL BET · ROUND</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#fff;">{{ gpWageredTxt }} ◎</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#fff;">{{ gpWageredTxt }} <span style="font-size:11px;color:#9fb0c0;">SOL</span></div>
               </div>
               <div style="flex:1;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:9px 12px;">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#7d8aa0;letter-spacing:.5px;">PLAYERS · ROUND</div>
@@ -1031,7 +1029,7 @@
                   <span style="font-weight:800;color:#fff;flex:1;">{{ gh.res }}</span>
                   <span style="color:#9fb0c0;">{{ gh.zone }}</span>
                   <span style="color:#7d8aa0;">👥{{ gh.players }}</span>
-                  <span style="color:#c6f024;">{{ gh.wag }}◎</span>
+                  <span style="color:#c6f024;">{{ gh.wag }} SOL</span>
                 </div>
               </sc-for>
             </div>
