@@ -123,7 +123,10 @@
         <div class="stake"><input id="gpStake" type="number" min="0" step="0.01" value="0.10" inputmode="decimal" /><span>◎</span></div>
         <button class="btn lime full" id="gpJoin">JOIN ROUND</button>
         <p class="gp-status" id="gpStatus"></p>
-        <div class="gp-last" id="gpLast"></div>
+        <div class="gp-hist">
+          <div class="gp-hist-head">Recent rounds <button class="gp-more" id="gpMore">see more</button></div>
+          <div class="gp-hist-list" id="gpHistory"></div>
+        </div>
       </div>
 
       <!-- your goat -->

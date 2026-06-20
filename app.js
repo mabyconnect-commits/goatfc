@@ -411,8 +411,22 @@
 
   /* ============================================================ GENERAL PENALTY */
   const GP_ROUND = 30, GP_POOL_PER = 2, GP_SEED = "goatfc-general-penalty-v1", GP_ROUNDS_PER_DAY = 2880;
-  const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), last: $("#gpLast"), mode: $("#gpMode") };
+  const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), history: $("#gpHistory"), more: $("#gpMore"), mode: $("#gpMode") };
   let gpMode = "split"; // today's drop mode: "split" | "winner"
+  let gpRecent = [], gpHistExpanded = false;
+  async function renderGpHistory() {
+    const N = gpHistExpanded ? 20 : 5;
+    let rows = [];
+    if (API.live) rows = (gpRecent || []).slice(0, N);
+    else {
+      const cur = gpRound(), rs = [];
+      for (let r = cur - 1; r >= cur - N && r >= 0; r--) rs.push(r);
+      const outs = await Promise.all(rs.map((r) => gpOutcome(r)));
+      rows = rs.map((r, i) => ({ round: r, side: outs[i].side, land: outs[i].land }));
+    }
+    gpEl.history.innerHTML = rows.length ? rows.map((o) => `<div class="gp-hrow"><span class="gp-hr">#${o.round}</span><span class="gp-ho ${o.side === "goal" ? "g" : "s"}">${o.side === "goal" ? "GOAL" : "SAVE"}</span><span class="gp-hz">${ZNAME[o.land] || o.land}</span></div>`).join("") : '<div class="gp-hempty">No rounds yet — be first.</div>';
+    gpEl.more.textContent = gpHistExpanded ? "see less" : "see more";
+  }
   let gpSide = "goal", gpAngle = "", gpPending = null, gpBusy = false, gpLastPoll = 0;
   let gpData = { pool: 6, tokens: 0, lastRound: 0 };
   const gpRound = () => Math.floor(Date.now() / 1000 / GP_ROUND);
@@ -464,7 +478,7 @@
       gpStatus(win ? `${side === "goal" ? "GOAL" : "SAVE"}! +${fmt(net)} ◎` : `${side === "goal" ? "GOAL" : "SAVE"} — ${fmt(net)} ◎`, win ? "ok" : "err");
       if (jpMsg) gpStatus(jpMsg, "jackpot");
     }
-    gpEl.last.innerHTML = `Last round: <b class="${side === "goal" ? "g" : "s"}">${side === "goal" ? "GOAL" : "SAVE"}</b> → ${ZNAME[land]}`;
+    renderGpHistory();
     gpPending = null; gpEl.join.disabled = false; gpRender();
   }
 
@@ -473,7 +487,7 @@
       const q = address ? "&address=" + address : "";
       const d = await (await fetch(`/api/goat-round?network=${API.network}${q}`)).json();
       if (d.ok) { gpData.pool = d.pool; if (typeof d.tokens === "number") gpData.tokens = d.tokens; gpRender();
-        if (d.recent && d.recent[0]) { const o = d.recent[0]; gpEl.last.innerHTML = `Last round: <b class="${o.side === "goal" ? "g" : "s"}">${o.side === "goal" ? "GOAL" : "SAVE"}</b> → ${ZNAME[o.land]}`; } }
+        gpRecent = d.recent || []; renderGpHistory(); }
     } catch (_) {}
   }
   async function gpRefreshLive() {
@@ -487,7 +501,7 @@
     const cur = gpRound();
     if (cur !== gpData.lastRound) {
       if (!API.live) { const elapsed = Math.min(cur - gpData.lastRound, 5); gpData.pool += GP_POOL_PER * elapsed; }
-      gpData.lastRound = cur; gpSaveLocal(); gpRender(); gpRenderMode();
+      gpData.lastRound = cur; gpSaveLocal(); gpRender(); gpRenderMode(); renderGpHistory();
       if (gpPending && gpPending.round < cur) { API.live ? gpRefreshLive() : gpResolveBeta(gpPending.round); }
     }
     if (API.live && Date.now() - gpLastPoll > 5000) { gpLastPoll = Date.now(); gpPoll(); }
@@ -521,6 +535,8 @@
     $$(".gp-side").forEach((b) => b.addEventListener("click", () => { gpSide = b.dataset.gpside; $$(".gp-side").forEach((x) => x.classList.toggle("on", x === b)); }));
     $$(".gp-ang").forEach((b) => b.addEventListener("click", () => { gpAngle = b.dataset.ang; $$(".gp-ang").forEach((x) => x.classList.toggle("sel", x === b)); }));
     gpEl.join.addEventListener("click", gpJoin);
+    gpEl.more.addEventListener("click", () => { gpHistExpanded = !gpHistExpanded; renderGpHistory(); });
+    renderGpHistory();
     setInterval(gpTick, 1000);
     if (API.live) gpPoll();
   }

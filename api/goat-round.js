@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     const round = fc.gpRoundNow();
     const pool = await fc.gpGetPool(net);
     const recent = [];
-    for (let r = round - 1; r >= round - 6 && r >= 0; r--) { const o = fc.gpOutcome(net, r); recent.push({ round: r, side: o.side, land: o.land }); }
+    for (let r = round - 1; r >= round - 20 && r >= 0; r--) { const o = fc.gpOutcome(net, r); recent.push({ round: r, side: o.side, land: o.land }); }
     let tokens = 0; const addr = req.query && req.query.address;
     if (fc.isAddress(addr)) tokens = await fc.gpGetTokens(net, addr);
     // NOTE: the split-vs-winner mode is intentionally NOT exposed before the drop
