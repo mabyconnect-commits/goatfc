@@ -411,9 +411,9 @@
 
   /* ============================================================ GENERAL PENALTY */
   const GP_ROUND = 30, GP_POOL_PER = 2, GP_SEED = "goatfc-general-penalty-v1", GP_ROUNDS_PER_DAY = 2880;
-  const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), history: $("#gpHistory"), more: $("#gpMore"), mode: $("#gpMode"), players: $("#gpPlayers") };
+  const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), history: $("#gpHistory"), more: $("#gpMore"), mode: $("#gpMode"), players: $("#gpPlayers"), wager: $("#gpWager") };
   let gpMode = "split"; // today's drop mode: "split" | "winner"
-  let gpRecent = [], gpHistExpanded = false, gpCurPlayers = 0;
+  let gpRecent = [], gpHistExpanded = false, gpCurPlayers = 0, gpCurWager = 0;
   async function renderGpHistory() {
     const N = gpHistExpanded ? 20 : 5;
     let rows = [];
@@ -424,12 +424,21 @@
       const outs = await Promise.all(rs.map((r) => gpOutcome(r)));
       rows = rs.map((r, i) => ({ round: r, side: outs[i].side, land: outs[i].land }));
     }
-    gpEl.history.innerHTML = rows.length ? rows.map((o) => { const pl = typeof o.players === "number" ? o.players : gpPlayersFor(o.round); return `<div class="gp-hrow"><span class="gp-hr">#${o.round}</span><span class="gp-ho ${o.side === "goal" ? "g" : "s"}">${o.side === "goal" ? "GOAL" : "SAVE"}</span><span class="gp-hz">${ZNAME[o.land] || o.land}</span><span class="gp-hp">👥 ${pl}</span></div>`; }).join("") : '<div class="gp-hempty">No rounds yet — be first.</div>';
+    gpEl.history.innerHTML = rows.length ? rows.map((o) => {
+      const pl = typeof o.players === "number" ? o.players : gpPlayersFor(o.round);
+      const wg = typeof o.wagered === "number" ? o.wagered : gpWagerFor(o.round);
+      return `<div class="gp-hrow"><span class="gp-hr">#${o.round}</span><span class="gp-ho ${o.side === "goal" ? "g" : "s"}">${o.side === "goal" ? "GOAL" : "SAVE"}</span><span class="gp-hz">${ZNAME[o.land] || o.land}</span><span class="gp-hp">👥 ${pl} · ${fmt2(wg)} ◎</span></div>`;
+    }).join("") : '<div class="gp-hempty">No rounds yet — be first.</div>';
     gpEl.more.textContent = gpHistExpanded ? "see less" : "see more";
   }
-  // BETA: believable per-round crowd size (deterministic so it's stable)
+  // BETA: believable per-round crowd size + wagered (deterministic so they're stable)
   function gpPlayersFor(r) { return 4 + (gpHash("pl" + r) % 22); }
-  function gpRenderPlayers() { gpEl.players.textContent = API.live ? gpCurPlayers : (gpPlayersFor(gpRound()) + (gpPending && gpPending.round === gpRound() ? 1 : 0)); }
+  function gpWagerFor(r) { return Math.round(gpPlayersFor(r) * (0.05 + (gpHash("wag" + r) % 26) / 100) * 100) / 100; }
+  function gpRenderPlayers() {
+    const mine = gpPending && gpPending.round === gpRound();
+    gpEl.players.textContent = API.live ? gpCurPlayers : (gpPlayersFor(gpRound()) + (mine ? 1 : 0));
+    gpEl.wager.textContent = fmt2(API.live ? gpCurWager : (gpWagerFor(gpRound()) + (mine ? (Number(gpEl.stake.value) || 0) : 0)));
+  }
   let gpSide = "goal", gpAngle = "", gpPending = null, gpBusy = false, gpLastPoll = 0;
   let gpData = { pool: 6, tokens: 0, lastRound: 0 };
   const gpRound = () => Math.floor(Date.now() / 1000 / GP_ROUND);
@@ -489,7 +498,7 @@
     try {
       const q = address ? "&address=" + address : "";
       const d = await (await fetch(`/api/goat-round?network=${API.network}${q}`)).json();
-      if (d.ok) { gpData.pool = d.pool; if (typeof d.tokens === "number") gpData.tokens = d.tokens; gpCurPlayers = d.roundPlayers || 0; gpRender(); gpRenderPlayers();
+      if (d.ok) { gpData.pool = d.pool; if (typeof d.tokens === "number") gpData.tokens = d.tokens; gpCurPlayers = d.roundPlayers || 0; gpCurWager = d.roundWagered || 0; gpRender(); gpRenderPlayers();
         gpRecent = d.recent || []; renderGpHistory(); }
     } catch (_) {}
   }

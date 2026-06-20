@@ -29,6 +29,7 @@ module.exports = async (req, res) => {
       a.balance = fc.round9(a.balance - total); // escrow
       await fc.putAccount(a);
       await fc.kv().rpush(fc.gpBetsKey(net, round), JSON.stringify({ address: b.address, side, stake, zone: angle, zoneStake: angleStake }));
+      try { await fc.kv().incrbyfloat(fc.gpWagerKey(net, round), total); } catch (_) {}
       await fc.kv().set(playedKey, 1, { ex: 300 });
       // pool +2 once per round (on the round's first bet)
       const last = Number(await fc.kv().get(fc.gpLastPoolKey(net)));
