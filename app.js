@@ -466,6 +466,20 @@
   function gpRender() { gpEl.pool.textContent = Math.round(gpData.pool).toLocaleString(); gpEl.tok.textContent = (Math.round((gpData.tokens || 0) * 100) / 100).toLocaleString(); }
   function gpTimerTick() { gpEl.timer.textContent = "0:" + String(gpLeft()).padStart(2, "0"); }
 
+  // play the round's result in the stadium (same visuals as an individual shot)
+  async function gpAnimateOutcome(outcome, land, win) {
+    if (busy) return;            // don't interrupt an individual shot
+    busy = true;
+    try { el.stadium.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) {}
+    resetScene();
+    el.ball.classList.add("spin");
+    await new Promise((res) => setTimeout(res, 1200)); // brief build-up
+    await animate(outcome, land);
+    showFlash(outcome, win, false);
+    if (outcome === "goal") { confettiBurst(); setTimeout(celebrate, 350); }
+    setTimeout(() => { el.flash.className = "flash"; resetScene(); busy = false; }, 1700);
+  }
+
   async function gpResolveBeta(r) {
     const { side, land } = await gpOutcome(r);
     const b = gpPending;
@@ -492,6 +506,7 @@
       renderAll(); save(); gpSaveLocal();
       gpStatus(win ? `${side === "goal" ? "GOAL" : "SAVE"}! +${fmt(net)} ◎` : `${side === "goal" ? "GOAL" : "SAVE"} — ${fmt(net)} ◎`, win ? "ok" : "err");
       if (jpMsg) gpStatus(jpMsg, "jackpot");
+      gpAnimateOutcome(side, land, win); // show it in the stadium
     }
     renderGpHistory();
     gpPending = null; gpEl.join.disabled = false; gpRender();
@@ -507,8 +522,11 @@
   }
   async function gpRefreshLive() {
     if (!API.live) return;
+    const p = gpPending;
     try { const d = await API.post("/api/goat-account", {}); if (d.ok) { applyAccount(d.account); renderAll(); } } catch (_) {}
-    gpPoll(); gpPending = null; gpEl.join.disabled = false;
+    await gpPoll();
+    if (p) { const o = (gpRecent || []).find((x) => x.round === p.round); if (o) gpAnimateOutcome(o.side, o.land, o.side === p.side); }
+    gpPending = null; gpEl.join.disabled = false;
   }
 
   function gpTick() {
@@ -536,7 +554,7 @@
     if (API.live) {
       const d = await API.post("/api/goat-play", { side: gpSide, stake, angle, angleStake });
       if (!d.ok) { gpBusy = false; gpEl.join.disabled = false; return gpStatus(d.error === "already_joined" ? "Already in this round." : d.error === "insufficient" ? "Not enough balance." : "Couldn't join — try again.", "err"); }
-      state.credits = d.balance; gpData.pool = d.pool; renderStats(); gpRender(); gpPending = { round };
+      state.credits = d.balance; gpData.pool = d.pool; renderStats(); gpRender(); gpPending = { round, side: gpSide === "save" ? "miss" : "goal" };
     } else {
       state.credits = clamp0(state.credits - total); renderStats(); save();
       gpPending = { round, side: gpSide === "save" ? "miss" : "goal", stake, angle, angleStake };
