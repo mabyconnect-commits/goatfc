@@ -332,6 +332,9 @@
     try { el.stadium.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) { window.scrollTo(0, 0); }
     let r; try { r = API.live ? await settleServer({ side, main, z }) : await settleLocal({ side, main, z }); } catch (_) { r = { ok: false }; }
     if (!r.ok) { busy = false; el.kickBtn.disabled = false; el.kickBtn.textContent = "⚽ SHOOT"; return msg("Couldn't place the bet — try again.", "err"); }
+    // suspense: hold for 3s before the ball is struck
+    el.kickBtn.textContent = "⚽ …"; el.ball.classList.add("spin");
+    await new Promise((res) => setTimeout(res, 3000));
     await animate(r.outcome, r.land);
     showFlash(r.outcome, r.win, r.zoneWin);
     renderAll(); renderStandings(); save();
