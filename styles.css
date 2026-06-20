@@ -233,3 +233,28 @@ button{font-family:inherit;cursor:pointer}
 .lock{border:1px solid rgba(255,211,78,.4);background:rgba(255,211,78,.07);color:var(--gold);border-radius:10px;padding:.7rem .9rem;font-size:.84rem;margin-bottom:.8rem}
 
 .foot{text-align:center;color:var(--muted);font-size:.78rem;padding:2rem 1rem;border-top:1px solid var(--line);margin-top:2rem;display:grid;gap:.4rem}
+
+/* ===== General Penalty card ===== */
+.gp{border-color:rgba(255,211,78,.35);background:linear-gradient(180deg,#13351f,#0e2417)}
+.gp-head{display:flex;align-items:center;justify-content:space-between}
+.gp-head h3{margin:0;font-size:1.1rem}
+.gp-timer{font-family:var(--disp);font-size:1.2rem;color:var(--gold);background:rgba(255,211,78,.12);border:1px solid rgba(255,211,78,.3);border-radius:999px;padding:.15rem .7rem;min-width:74px;text-align:center}
+.gp-sub{font-size:.78rem;color:var(--ink-soft);margin:.4rem 0 .7rem}
+.gp-pool{display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:.8rem}
+.gp-pool>div{border:1px solid var(--line);border-radius:12px;padding:.55rem .8rem;background:rgba(0,0,0,.25)}
+.gp-pool span{display:block;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.gp-pool b{font-family:var(--disp);font-size:1.3rem;color:var(--gold)}
+.gp-yours{text-align:right}
+.gp-sides{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.6rem}
+.gp-side{border:2px solid var(--line);background:rgba(255,255,255,.02);color:var(--ink);border-radius:12px;padding:.6rem;font-family:var(--disp);font-size:1.1rem;letter-spacing:.04em}
+.gp-side.goal.on{border-color:var(--green);background:rgba(22,211,154,.14);color:var(--green)}
+.gp-side.save.on{border-color:var(--r);background:rgba(255,59,70,.14);color:var(--r)}
+.gp-angle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:.5rem}
+.gp-angle-l{font-size:.78rem;color:var(--ink-soft)}.gp-angle-l small{color:var(--muted)}
+.gp-angs{display:flex;gap:5px}
+.gp-ang{width:34px;height:30px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--ink-soft);border-radius:8px;font-size:.9rem}
+.gp-ang.sel{border-color:var(--gold);background:rgba(255,211,78,.16);color:var(--gold)}
+.gp-status{text-align:center;min-height:1.1em;font-size:.84rem;margin-top:.5rem}
+.gp-status.ok{color:var(--lime)}.gp-status.err{color:var(--r)}.gp-status.jackpot{color:var(--gold);font-weight:700}
+.gp-last{font-size:.82rem;color:var(--ink-soft);text-align:center;margin-top:.5rem;min-height:1em}
+.gp-last .g{color:var(--green)}.gp-last .s{color:var(--r)}

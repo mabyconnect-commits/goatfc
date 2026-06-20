@@ -11,6 +11,7 @@ country, take the penalty, and every goal you score pushes your GOAT up the
   exact **corner** (×9.90). Provably fair.
 - **Celebrations** — confetti in your GOAT's colours, signature lines
   (Ronaldo's *SIUUU!*, Messi's magic), and your country's flag on every goal.
+- **⚡ General Penalty** — a communal round every minute; everyone plays the same provably-fair result. Pick GOAL/SAVE (+ optional angle). Each round adds **2 GOAT** to a Reward Pool that drops **once daily at a random minute** to everyone who bet in that exact round.
 - **Global GOAT standings** — total goals scored as **Ronaldo vs Messi** across
   all players, updated live as you score.
 - **Leaderboard** (profit / goals), session stats, shot history.

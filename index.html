@@ -94,6 +94,37 @@
 
     <!-- ===== CONSOLE ===== -->
     <aside class="console">
+      <!-- ===== GENERAL PENALTY (communal, every minute) ===== -->
+      <div class="card gp" id="gpCard">
+        <div class="gp-head">
+          <h3>⚡ General Penalty</h3>
+          <span class="gp-timer" id="gpTimer">--:--</span>
+        </div>
+        <p class="gp-sub">One shot a minute — <b>everyone</b> plays the same result. Win the daily <b>GOAT</b> drop.</p>
+        <div class="gp-pool">
+          <div><span>🐐 Reward Pool</span><b id="gpPool">0</b> GOAT</div>
+          <div class="gp-yours"><span>Your GOAT</span><b id="gpTok">0</b></div>
+        </div>
+        <div class="gp-sides">
+          <button class="gp-side goal on" data-gpside="goal">GOAL</button>
+          <button class="gp-side save" data-gpside="save">SAVE</button>
+        </div>
+        <div class="gp-angle">
+          <span class="gp-angle-l">Angle <small>×9.9 (optional)</small></span>
+          <div class="gp-angs" id="gpAngs">
+            <button class="gp-ang sel" data-ang="">—</button>
+            <button class="gp-ang" data-ang="TL">↖</button>
+            <button class="gp-ang" data-ang="TR">↗</button>
+            <button class="gp-ang" data-ang="BL">↙</button>
+            <button class="gp-ang" data-ang="BR">↘</button>
+          </div>
+        </div>
+        <div class="stake"><input id="gpStake" type="number" min="0" step="0.01" value="0.10" inputmode="decimal" /><span>◎</span></div>
+        <button class="btn lime full" id="gpJoin">JOIN ROUND</button>
+        <p class="gp-status" id="gpStatus"></p>
+        <div class="gp-last" id="gpLast"></div>
+      </div>
+
       <!-- your goat -->
       <div class="card goatcard" id="goatCard">
         <div class="gc-l">
