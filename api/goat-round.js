@@ -16,7 +16,9 @@ module.exports = async (req, res) => {
     for (let r = round - 1; r >= round - 6 && r >= 0; r--) { const o = fc.gpOutcome(net, r); recent.push({ round: r, side: o.side, land: o.land }); }
     let tokens = 0; const addr = req.query && req.query.address;
     if (fc.isAddress(addr)) tokens = await fc.gpGetTokens(net, addr);
-    return res.status(200).json({ ok: true, network: net, round, secondsLeft: fc.gpSecondsLeft(), poolPerRound: fc.GP.POOL_PER_ROUND, pool, tokens, recent });
+    const { day } = fc.gpTriggerRound(net, round);
+    const jackpotMode = fc.gpJackpotMode(net, day); // "split" | "winner" for today
+    return res.status(200).json({ ok: true, network: net, round, secondsLeft: fc.gpSecondsLeft(), poolPerRound: fc.GP.POOL_PER_ROUND, pool, tokens, jackpotMode, recent });
   } catch (e) {
     return res.status(500).json({ ok: false, error: "round_failed", detail: String(e) });
   }

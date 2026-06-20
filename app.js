@@ -366,7 +366,8 @@
 
   /* ============================================================ GENERAL PENALTY */
   const GP_ROUND = 60, GP_POOL_PER = 2, GP_SEED = "goatfc-general-penalty-v1";
-  const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), last: $("#gpLast") };
+  const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), last: $("#gpLast"), mode: $("#gpMode") };
+  let gpMode = "split"; // today's drop mode: "split" | "winner"
   let gpSide = "goal", gpAngle = "", gpPending = null, gpBusy = false, gpLastPoll = 0;
   let gpData = { pool: 6, tokens: 0, lastRound: 0 };
   const gpRound = () => Math.floor(Date.now() / 1000 / GP_ROUND);
@@ -379,7 +380,14 @@
     const land = ZONES[Math.floor((await hmacFloat(GP_SEED, `${r}:a`)) * ZONES.length)];
     return { side, land };
   }
-  function gpTrigger(r) { const day = Math.floor(r / 1440); let h = 2166136261; const s = "jp" + day; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return day * 1440 + ((h >>> 0) % 1440); }
+  function gpHash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function gpTrigger(r) { const day = Math.floor(r / 1440); return day * 1440 + (gpHash("jp" + day) % 1440); }
+  function gpModeFor(r) { const day = Math.floor(r / 1440); return (gpHash("jpmode" + day) % 2) ? "winner" : "split"; }
+  function gpRenderMode() {
+    gpMode = API.live ? gpMode : gpModeFor(gpRound());
+    gpEl.mode.className = "gp-mode " + gpMode;
+    gpEl.mode.textContent = gpMode === "winner" ? "🎁 Today's drop: 👑 ONE WINNER takes the pool" : "🎁 Today's drop: 🤝 SPLIT among all players";
+  }
   const gpStatus = (t, c) => { gpEl.status.textContent = t; gpEl.status.className = "gp-status " + (c || ""); };
   function gpRender() { gpEl.pool.textContent = Math.round(gpData.pool).toLocaleString(); gpEl.tok.textContent = (Math.round((gpData.tokens || 0) * 100) / 100).toLocaleString(); }
   function gpTimerTick() { gpEl.timer.textContent = "0:" + String(gpLeft()).padStart(2, "0"); }
@@ -395,11 +403,21 @@
       state.credits = clamp0(state.credits + net + b.stake + b.angleStake); // un-escrow + winnings
       state.shots++; state.wagered += b.stake + b.angleStake; state.pnl += net;
       state.history.unshift({ outcome: side, land, win, net }); state.history = state.history.slice(0, 50);
-      let jp = 0;
-      if (r === gpTrigger(r)) { jp = gpData.pool; gpData.tokens = (gpData.tokens || 0) + jp; gpData.pool = 0; }
+      let jpMsg = null;
+      if (r === gpTrigger(r)) {
+        const mode = gpModeFor(r), pool = gpData.pool; gpData.pool = 0;
+        const N = 5 + (gpHash("field" + r) % 8); // simulated field (incl. you) for BETA
+        if (mode === "winner") {
+          if ((gpHash("win" + r) % N) === 0) { gpData.tokens = (gpData.tokens || 0) + pool; jpMsg = `👑 WINNER TAKES ALL — you won ${fmt(pool)} GOAT!`; confettiBurst(); }
+          else jpMsg = `🎁 Daily drop hit — another player took the ${fmt(pool)} GOAT pool today.`;
+        } else {
+          const share = Math.round((pool / N) * 100) / 100;
+          gpData.tokens = (gpData.tokens || 0) + share; jpMsg = `🤝 DAILY DROP! Pool split — you got ${fmt(share)} GOAT!`; confettiBurst();
+        }
+      }
       renderAll(); save(); gpSaveLocal();
       gpStatus(win ? `${side === "goal" ? "GOAL" : "SAVE"}! +${fmt(net)} ◎` : `${side === "goal" ? "GOAL" : "SAVE"} — ${fmt(net)} ◎`, win ? "ok" : "err");
-      if (jp > 0) { confettiBurst(); gpStatus(`🐐 DAILY GOAT DROP! You won ${fmt(jp)} GOAT!`, "jackpot"); }
+      if (jpMsg) gpStatus(jpMsg, "jackpot");
     }
     gpEl.last.innerHTML = `Last round: <b class="${side === "goal" ? "g" : "s"}">${side === "goal" ? "GOAL" : "SAVE"}</b> → ${ZNAME[land]}`;
     gpPending = null; gpEl.join.disabled = false; gpRender();
@@ -409,7 +427,7 @@
     try {
       const q = address ? "&address=" + address : "";
       const d = await (await fetch(`/api/goat-round?network=${API.network}${q}`)).json();
-      if (d.ok) { gpData.pool = d.pool; if (typeof d.tokens === "number") gpData.tokens = d.tokens; gpRender();
+      if (d.ok) { gpData.pool = d.pool; if (typeof d.tokens === "number") gpData.tokens = d.tokens; if (d.jackpotMode) { gpMode = d.jackpotMode; gpRenderMode(); } gpRender();
         if (d.recent && d.recent[0]) { const o = d.recent[0]; gpEl.last.innerHTML = `Last round: <b class="${o.side === "goal" ? "g" : "s"}">${o.side === "goal" ? "GOAL" : "SAVE"}</b> → ${ZNAME[o.land]}`; } }
     } catch (_) {}
   }
@@ -424,7 +442,7 @@
     const cur = gpRound();
     if (cur !== gpData.lastRound) {
       if (!API.live) { const elapsed = Math.min(cur - gpData.lastRound, 5); gpData.pool += GP_POOL_PER * elapsed; }
-      gpData.lastRound = cur; gpSaveLocal(); gpRender();
+      gpData.lastRound = cur; gpSaveLocal(); gpRender(); gpRenderMode();
       if (gpPending && gpPending.round < cur) { API.live ? gpRefreshLive() : gpResolveBeta(gpPending.round); }
     }
     if (API.live && Date.now() - gpLastPoll > 5000) { gpLastPoll = Date.now(); gpPoll(); }
@@ -454,7 +472,7 @@
   }
 
   function gpInit() {
-    gpLoad(); if (!gpData.lastRound) gpData.lastRound = gpRound(); gpRender(); gpTimerTick();
+    gpLoad(); if (!gpData.lastRound) gpData.lastRound = gpRound(); gpRender(); gpRenderMode(); gpTimerTick();
     $$(".gp-side").forEach((b) => b.addEventListener("click", () => { gpSide = b.dataset.gpside; $$(".gp-side").forEach((x) => x.classList.toggle("on", x === b)); }));
     $$(".gp-ang").forEach((b) => b.addEventListener("click", () => { gpAngle = b.dataset.ang; $$(".gp-ang").forEach((x) => x.classList.toggle("sel", x === b)); }));
     gpEl.join.addEventListener("click", gpJoin);

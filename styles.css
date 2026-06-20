@@ -258,3 +258,5 @@ button{font-family:inherit;cursor:pointer}
 .gp-status.ok{color:var(--lime)}.gp-status.err{color:var(--r)}.gp-status.jackpot{color:var(--gold);font-weight:700}
 .gp-last{font-size:.82rem;color:var(--ink-soft);text-align:center;margin-top:.5rem;min-height:1em}
 .gp-last .g{color:var(--green)}.gp-last .s{color:var(--r)}
+.gp-mode{font-size:.74rem;font-weight:700;color:var(--gold);background:rgba(255,211,78,.1);border:1px solid rgba(255,211,78,.3);border-radius:999px;padding:.2rem .7rem;display:inline-block;margin-bottom:.7rem}
+.gp-mode.winner{color:#ffd34e}.gp-mode.split{color:var(--lime);background:rgba(182,255,46,.1);border-color:rgba(182,255,46,.3)}
