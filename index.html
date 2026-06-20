@@ -1837,7 +1837,21 @@ class Component extends DCLogic {
   goDeposit=()=>this.setState({accountTab:'deposit'});
   goWithdraw=()=>this.setState({accountTab:'withdraw'});
   closeModal=()=>this.setState({modal:null});
-  connect=()=>this.setState({connected:true});
+  connect=async()=>{
+    const ph=(window.phantom&&window.phantom.solana&&window.phantom.solana.isPhantom)?window.phantom.solana:((window.solana&&window.solana.isPhantom)?window.solana:null);
+    const sf=(window.solflare&&(window.solflare.isSolflare||window.solflare.connect))?window.solflare:null;
+    const prov=ph||sf;
+    if(!prov){ window.open('https://phantom.app/','_blank'); return; }
+    try{
+      await prov.connect();
+      let pk=prov.publicKey;
+      if(!pk){ await new Promise(r=>setTimeout(r,400)); pk=prov.publicKey; }
+      if(!pk) return;
+      const addr=pk.toString();
+      this._wallet=prov;
+      this.setState({connected:true, address:addr, handle:this.state.handle||(addr.slice(0,4)+'…'+addr.slice(-4))});
+    }catch(e){}
+  };
   pickGoalBet=()=>this.setState({pick:'goal'});
   pickMissBet=()=>this.setState({pick:'miss', zone:null});
   setZone=(z)=>{ if(this.state.pick!=='goal'||this.state.phase!=='aim') return; this.setState({zone: this.state.zone===z?null:z}); };
