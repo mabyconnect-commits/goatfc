@@ -989,7 +989,7 @@
             <div style="text-align:center;margin-bottom:12px;">
               <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,59,59,.14);border:1px solid rgba(255,90,90,.4);border-radius:999px;padding:4px 13px;margin-bottom:6px;">
                 <span style="width:7px;height:7px;border-radius:50%;background:#ff5a5a;animation:gfcStarTwinkle 1.4s infinite;"></span>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:#ff7a7a;letter-spacing:1px;">LIVE · EVERYONE PLAYS THE SAME SHOT</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:#ff7a7a;letter-spacing:1px;">LIVE</span>
               </div>
               <h2 style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:22px;color:#fff;margin:0;letter-spacing:-.4px;">GENERAL PENALTY</h2>
             </div>
@@ -1012,6 +1012,29 @@
               </div>
             </div>
 
+            <!-- total bet + players + recent rounds (from old UI) -->
+            <div style="display:flex;gap:9px;margin-bottom:10px;">
+              <div style="flex:1;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:9px 12px;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#7d8aa0;letter-spacing:.5px;">TOTAL BET · ROUND</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#fff;">{{ gpWageredTxt }} ◎</div>
+              </div>
+              <div style="flex:1;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:9px 12px;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#7d8aa0;letter-spacing:.5px;">PLAYERS · ROUND</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#5fa0ff;">{{ gpPlayersTxt }}</div>
+              </div>
+            </div>
+            <div style="border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);padding:10px 12px;margin-bottom:12px;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#7d8aa0;letter-spacing:1px;margin-bottom:4px;">RECENT ROUNDS</div>
+              <sc-for list="{{ gpHistFeed }}" as="gh" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.05);font-family:'JetBrains Mono',monospace;font-size:11px;">
+                  <span style="color:#7d8aa0;min-width:60px;">{{ gh.round }}</span>
+                  <span style="font-weight:800;color:#fff;flex:1;">{{ gh.res }}</span>
+                  <span style="color:#9fb0c0;">{{ gh.zone }}</span>
+                  <span style="color:#7d8aa0;">👥{{ gh.players }}</span>
+                  <span style="color:#c6f024;">{{ gh.wag }}◎</span>
+                </div>
+              </sc-for>
+            </div>
             <!-- the spot (mini pitch) -->
             <div style="position:relative;height:150px;border-radius:15px;overflow:hidden;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,#0a1a12,#0e2c1b);margin-bottom:13px;">
               <div style="position:absolute;top:16px;left:14%;right:14%;height:74px;border:4px solid rgba(255,255,255,.85);border-bottom:none;border-radius:4px 4px 0 0;background:repeating-linear-gradient(0deg,transparent 0 9px,rgba(255,255,255,.08) 9px 10px),repeating-linear-gradient(90deg,transparent 0 9px,rgba(255,255,255,.08) 9px 10px);"></div>
@@ -1557,10 +1580,11 @@ class Component extends DCLogic {
       simLeague:'wc', slip:[], slipOpen:false, simStake:0.10, simStakeInput:'0.10',
       matchMin:0, matchRunning:false, matchEvents:[], matchLegs:[], accaResult:null,
       // ===== General Penalty (global synced round) =====
-      gpRound:48217, gpSecs:42, gpPhase:'betting',
+      gpRound:48217, gpSecs:30, gpPhase:'betting',
       gpPick:null, gpZone:null, gpStake:0.05, gpStakeInput:'0.05',
       gpMyBet:null, gpResult:null,
-      gpPlayers:1284, gpRewardPool:1860,
+      gpPlayers:1284, gpRewardPool:1860, gpWagered:74.2,
+      gpHistory:[{round:48216,scored:true,zone:'TL',players:1190,wagered:71.4},{round:48215,scored:false,zone:'C',players:1322,wagered:80.1},{round:48214,scored:true,zone:'BR',players:1045,wagered:62.8},{round:48213,scored:true,zone:'TR',players:1408,wagered:88.0},{round:48212,scored:false,zone:'BL',players:980,wagered:59.3}],
       gpTriggerIn:4, gpLastDrop:null, gpDropFlash:false,
       gpWins:[
         {h:'siu_maxi',f:'🇵🇹',txt:'GOAL · top left'},
@@ -1595,19 +1619,20 @@ class Component extends DCLogic {
     // new round
     if(secs<=0){
       return {
-        gpRound:s.gpRound+1, gpSecs:60, gpPhase:'betting',
+        gpRound:s.gpRound+1, gpSecs:30, gpPhase:'betting',
         gpPick:null, gpZone:null, gpMyBet:null, gpResult:null,
-        gpPlayers:680+Math.floor(Math.random()*920),
+        gpPlayers:680+Math.floor(Math.random()*920), gpWagered: Math.round((40+Math.random()*60)*100)/100,
         gpRewardPool:s.gpRewardPool+2,
         gpDropFlash:false
       };
     }
     // reveal moment (10s left): compute the ONE shared result
-    if(s.gpPhase==='betting' && secs<=10){
+    if(s.gpPhase==='betting' && secs<=8){
       const ballZone=ZONES[Math.floor(Math.random()*5)];
       const keeperZone=ZONES[Math.floor(Math.random()*5)];
       let scored=keeperZone!==ballZone; if(Math.random()<0.12) scored=false;
       const out={ gpSecs:secs, gpPhase:'reveal', gpResult:{scored, zone:ballZone, keeperZone} };
+      out.gpHistory=[{round:s.gpRound, scored, zone:ballZone, players:s.gpPlayers, wagered:s.gpWagered},...(s.gpHistory||[])].slice(0,20);
       // settle my bet
       if(s.gpMyBet){
         const mb=s.gpMyBet;
@@ -1646,7 +1671,7 @@ class Component extends DCLogic {
     const s=this.state;
     if(s.gpPhase!=='betting'||s.gpMyBet||!s.gpPick) return;
     if(s.gpStake>s.balance){ this.setState({modal:'account', accountTab:'deposit'}); return; }
-    this.setState({ gpMyBet:{pick:s.gpPick, zone:s.gpZone, stake:s.gpStake, settled:false}, balance:Math.round((s.balance-s.gpStake)*1000)/1000, gpPlayers:s.gpPlayers+1 });
+    this.setState({ gpMyBet:{pick:s.gpPick, zone:s.gpZone, stake:s.gpStake, settled:false}, balance:Math.round((s.balance-s.gpStake)*1000)/1000, gpPlayers:s.gpPlayers+1, gpWagered:Math.round((s.gpWagered+s.gpStake)*100)/100 });
   };
   gpDismissDrop=()=>this.setState({gpDropFlash:false});
   componentWillUnmount(){ if(this.poolTimer) clearInterval(this.poolTimer); if(this.matchTimer) clearInterval(this.matchTimer); this.stopAllClips(); }
@@ -2276,7 +2301,7 @@ class Component extends DCLogic {
       isGeneral:s.screen==='general', goGeneral:this.goGeneral,
       gpRoundTxt:'#'+s.gpRound.toLocaleString(), gpClock,
       gpPhaseBetting:gpBetting, gpLocked, gpReveal,
-      gpClockPct: Math.round(s.gpSecs/60*100),
+      gpClockPct: Math.round(s.gpSecs/30*100),
       gpPickGoalSel: s.gpPick==='goal', gpPickSaveSel: s.gpPick==='save',
       gpSelectGoal:()=>this.gpSelect('goal'), gpSelectSave:()=>this.gpSelect('save'),
       gpShowZones: s.gpPick==='goal' && !gpLocked,
@@ -2289,6 +2314,8 @@ class Component extends DCLogic {
       gpLockFg: (gpBetting&&s.gpPick)?'#0a1200':'#7d8aa0',
       gpPlayersTxt:s.gpPlayers.toLocaleString(),
       gpRewardPoolTxt:s.gpRewardPool.toLocaleString(),
+      gpWageredTxt:this.fmt(s.gpWagered,2),
+      gpHistFeed:(s.gpHistory||[]).slice(0,5).map((r,i)=>({key:i, round:'#'+r.round.toLocaleString(), res:r.scored?'⚽ GOAL':'🧤 SAVE', zone:ZN[r.zone]||r.zone, players:r.players.toLocaleString(), wag:this.fmt(r.wagered,2)})),
       gpMyPickTxt, gpResLabel, gpResColor, gpResZone,
       gpResScored: gpReveal&&s.gpResult.scored,
       gpMyResult, gpHasMyResult:!!gpMyResult,
