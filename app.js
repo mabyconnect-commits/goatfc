@@ -328,6 +328,8 @@
     if (zoneOn && (!zonePick || z < MIN_BET)) return msg("Pick a corner + stake, or turn the corner bet off.", "err");
     if (total > state.credits + 1e-9) return msg("Not enough balance. Lower the stake or top up.", "err");
     busy = true; el.kickBtn.disabled = true; el.kickBtn.textContent = "…"; el.msg.textContent = ""; resetScene();
+    // bring the pitch into view so the keeper/ball/result are visible (SHOOT sits below it on mobile)
+    try { el.stadium.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) { window.scrollTo(0, 0); }
     let r; try { r = API.live ? await settleServer({ side, main, z }) : await settleLocal({ side, main, z }); } catch (_) { r = { ok: false }; }
     if (!r.ok) { busy = false; el.kickBtn.disabled = false; el.kickBtn.textContent = "⚽ SHOOT"; return msg("Couldn't place the bet — try again.", "err"); }
     await animate(r.outcome, r.land);
