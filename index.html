@@ -1351,14 +1351,23 @@
                 <sc-if value="{{ connected }}" hint-placeholder-val="{{ false }}">
                   <div>
                     <div style="font-family:'Archivo Expanded',sans-serif;font-weight:800;font-size:17px;color:#fff;margin-bottom:3px;">Deposit SOL</div>
-                    <div style="font-size:12px;color:#7d8aa0;margin-bottom:14px;">From your connected wallet into GoatFC.</div>
+                    <div style="font-size:12px;color:#7d8aa0;margin-bottom:14px;">{{ depSubtitle }}</div>
                     <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;text-align:center;">
                       <div style="font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:800;color:#fff;display:inline-flex;align-items:center;gap:8px;">{{ depTxt }} <svg viewBox="0 0 101 80" width="28" height="22"><path d="M22 8 H94 L79 22 H7 Z" fill="url(#gfcSol)"/><path d="M7 33 H79 L94 47 H22 Z" fill="url(#gfcSol)"/><path d="M22 58 H94 L79 72 H7 Z" fill="url(#gfcSol)"/></svg></div>
                     </div>
                     <div style="display:flex;gap:7px;margin-top:11px;">
                       <sc-for list="{{ depChips }}" as="d" hint-placeholder-count="4"><div onClick="{{ d.tap }}" style="flex:1;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:{{ d.fg }};background:{{ d.bg }};border:1px solid {{ d.border }};">{{ d.label }}</div></sc-for>
                     </div>
-                    <div onClick="{{ doDeposit }}" style="margin-top:16px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:16px;color:#0a1200;background:linear-gradient(90deg,#9fd80f,#c6f024);">Confirm Deposit</div>
+                    <sc-if value="{{ showDepAddr }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:11px;background:rgba(95,160,255,.06);border:1px solid rgba(95,160,255,.25);border-radius:11px;padding:9px 12px;">
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#7d8aa0;letter-spacing:.5px;">YOUR DEPOSIT ADDRESS</div>
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fc0e8;word-break:break-all;">{{ depAddrShort }}</div>
+                      </div>
+                    </sc-if>
+                    <div onClick="{{ doDeposit }}" style="margin-top:16px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:16px;color:#0a1200;background:linear-gradient(90deg,#9fd80f,#c6f024);opacity:{{ btnOpacity }};">{{ depBtnLabel }}</div>
+                    <sc-if value="{{ hasDepStatus }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb0c0;">{{ depStatus }}</div>
+                    </sc-if>
                   </div>
                 </sc-if>
                 <sc-if value="{{ notConnected }}" hint-placeholder-val="{{ true }}">
@@ -1384,7 +1393,10 @@
                 <div style="display:flex;gap:7px;margin-top:11px;">
                   <sc-for list="{{ wdChips }}" as="w" hint-placeholder-count="4"><div onClick="{{ w.tap }}" style="flex:1;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:{{ w.fg }};background:{{ w.bg }};border:1px solid {{ w.border }};">{{ w.label }}</div></sc-for>
                 </div>
-                <div onClick="{{ doWithdraw }}" style="margin-top:16px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:16px;color:#fff;background:rgba(224,168,46,.18);border:1.5px solid rgba(224,168,46,.5);">Confirm Withdraw</div>
+                <div onClick="{{ doWithdraw }}" style="margin-top:16px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:16px;color:#fff;background:rgba(224,168,46,.18);border:1.5px solid rgba(224,168,46,.5);opacity:{{ btnOpacity }};">{{ wdBtnLabel }}</div>
+                <sc-if value="{{ hasDepStatus }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb0c0;">{{ depStatus }}</div>
+                </sc-if>
               </div>
             </sc-if>
 
@@ -1546,7 +1558,7 @@ class Component extends DCLogic {
       ballZone:null, keeperZone:null, scored:null, lastWin:0, lastZoneWin:0, zoneHit:false,
       flash:false,
       modal:null, accountTab:'profile', connected:false, muted:false,
-      live:false, token:null, address:null, depositAddr:null, net:'devnet', goatUsd:0.1, liveBusy:false,
+      live:false, token:null, address:null, depositAddr:null, net:'devnet', goatUsd:0.1, liveBusy:false, depStatus:'',
       handle:'Maby', depAmt:0.5, wdAmt:0.5,
       ronaldoGoals:14827, messiGoals:14671,
       goatPool:18.642, poolSecs:2734, poolContributed:0.0428, poolWinning:'ronaldo',
@@ -1896,10 +1908,10 @@ class Component extends DCLogic {
   openAccount=()=>{ this.setState({modal:'account', accountTab:'profile'}); };
   openScore=()=>{ this.setState({modal:'account', accountTab:'score'}); };
   openPool=()=>{ this.setState({modal:'account', accountTab:'pool'}); };
-  setTab=(t)=>this.setState({accountTab:t});
+  setTab=(t)=>this.setState({accountTab:t, depStatus:''});
   stop=(e)=>{ if(e&&e.stopPropagation) e.stopPropagation(); };
-  goDeposit=()=>this.setState({accountTab:'deposit'});
-  goWithdraw=()=>this.setState({accountTab:'withdraw'});
+  goDeposit=()=>this.setState({accountTab:'deposit', depStatus:''});
+  goWithdraw=()=>this.setState({accountTab:'withdraw', depStatus:''});
   closeModal=()=>this.setState({modal:null});
   connect=async()=>{
     const ph=(window.phantom&&window.phantom.solana&&window.phantom.solana.isPhantom)?window.phantom.solana:((window.solana&&window.solana.isPhantom)?window.solana:null);
@@ -1969,27 +1981,68 @@ class Component extends DCLogic {
   onStakeBlur=()=>{ let n=parseFloat(this.state.stakeInput); if(isNaN(n)||n<0.01)n=0.01; if(n>this.state.balance)n=this.state.balance; n=Math.round(n*100)/100; this.setState({stake:n, stakeInput:n.toFixed(2)}); };
   setDep=(v)=>this.setState({depAmt:v});
   setWd=(v)=>this.setState({wdAmt:v});
-  doDeposit=()=>{
-    const s=this.state;
-    if(s.live && s.token){
-      this.setState({liveBusy:true});
-      this.api('goat-deposit-check',{address:s.address, token:s.token, network:s.net})
-        .then(r=>{ if(r&&r.ok) this.applyAccount(r.account||{balance:r.balance}); })
-        .catch(()=>{}).then(()=>this.setState({liveBusy:false}));
-      return;
-    }
-    this.setState(s=>({balance:Math.round((s.balance+s.depAmt)*1000)/1000, modal:null}));
+  // load @solana/web3.js in the browser (lazy, same CDN pattern as React)
+  loadWeb3=()=>{
+    if(window.solanaWeb3) return Promise.resolve(window.solanaWeb3);
+    if(this._web3p) return this._web3p;
+    this._web3p=new Promise((res,rej)=>{
+      const sc=document.createElement('script');
+      sc.src='https://unpkg.com/@solana/web3.js@1.95.4/lib/index.iife.min.js';
+      sc.onload=()=>res(window.solanaWeb3); sc.onerror=()=>rej(new Error('web3_load_failed'));
+      document.head.appendChild(sc);
+    });
+    return this._web3p;
   };
-  doWithdraw=()=>{
+  clientRpc=(net)=> net==='mainnet' ? 'https://api.mainnet-beta.solana.com' : 'https://api.devnet.solana.com';
+  doDeposit=async()=>{
     const s=this.state;
-    if(s.live && s.token){
-      this.setState({liveBusy:true});
-      this.api('goat-withdraw',{address:s.address, token:s.token, network:s.net, destination:s.address, amount:s.wdAmt})
-        .then(r=>{ if(r&&r.ok){ this.applyAccount({balance:r.balance}); this.setState({modal:null}); } })
-        .catch(()=>{}).then(()=>this.setState({liveBusy:false}));
+    if(!(s.live && s.token)){ // BETA — simulated credit
+      this.setState(st=>({balance:Math.round((st.balance+st.depAmt)*1000)/1000, modal:null}));
       return;
     }
-    this.setState(s=>({balance:Math.round((Math.max(0,s.balance-s.wdAmt))*1000)/1000, modal:null}));
+    if(!s.depositAddr || !this._wallet){ this.setState({depStatus:'No deposit address — reconnect wallet.'}); return; }
+    this.setState({liveBusy:true, depStatus:'Confirm in your wallet…'});
+    try{
+      const w3=await this.loadWeb3();
+      const conn=new w3.Connection(this.clientRpc(s.net),'confirmed');
+      const from=new w3.PublicKey(s.address), to=new w3.PublicKey(s.depositAddr);
+      const lamports=Math.round(s.depAmt*1e9);
+      const tx=new w3.Transaction().add(w3.SystemProgram.transfer({fromPubkey:from, toPubkey:to, lamports}));
+      tx.feePayer=from;
+      tx.recentBlockhash=(await conn.getLatestBlockhash('confirmed')).blockhash;
+      let sig;
+      if(this._wallet.signTransaction){
+        // sign in-wallet, broadcast via OUR rpc so it always lands on the app's network
+        const signed=await this._wallet.signTransaction(tx);
+        this.setState({depStatus:'Sending… confirming on-chain'});
+        sig=await conn.sendRawTransaction(signed.serialize());
+      } else {
+        const sent=await this._wallet.signAndSendTransaction(tx);
+        sig=sent && (sent.signature || sent);
+        this.setState({depStatus:'Sending… confirming on-chain'});
+      }
+      try{ await conn.confirmTransaction(sig, 'confirmed'); }catch(_){}
+      await new Promise(r=>setTimeout(r,1200));
+      this.setState({depStatus:'Crediting your balance…'});
+      const chk=await this.api('goat-deposit-check',{address:s.address, token:s.token, network:s.net});
+      if(chk && chk.ok){ this.applyAccount(chk.account||{balance:chk.balance}); this.setState({modal:null, depStatus:''}); }
+      else this.setState({depStatus:'Sent — tap again to credit if not shown.'});
+    }catch(e){ this.setState({depStatus: (e&&/reject/i.test(String(e.message||e)))?'Cancelled.':'Deposit failed — try again.'}); }
+    finally{ this.setState({liveBusy:false}); }
+  };
+  doWithdraw=async()=>{
+    const s=this.state;
+    if(!(s.live && s.token)){ // BETA — simulated debit
+      this.setState(st=>({balance:Math.round((Math.max(0,st.balance-st.wdAmt))*1000)/1000, modal:null}));
+      return;
+    }
+    this.setState({liveBusy:true, depStatus:'Sending to your wallet…'});
+    try{
+      const r=await this.api('goat-withdraw',{address:s.address, token:s.token, network:s.net, destination:s.address, amount:s.wdAmt});
+      if(r && r.ok){ this.applyAccount({balance:r.balance}); this.setState({modal:null, depStatus:''}); }
+      else this.setState({depStatus: r&&r.error==='insufficient'?'Insufficient balance.':(r&&r.error==='below_min'?('Min withdraw '+r.min+' SOL.'):'Withdraw failed.')});
+    }catch(e){ this.setState({depStatus:'Withdraw failed — try again.'}); }
+    finally{ this.setState({liveBusy:false}); }
   };
 
   strike=()=>{
@@ -2518,6 +2571,11 @@ class Component extends DCLogic {
       pickGoalBet:this.pickGoalBet, pickMissBet:this.pickMissBet,
       stakeUp:this.stakeUp, stakeDown:this.stakeDown, setStake:this.setStake,
       setDep:this.setDep, setWd:this.setWd, doDeposit:this.doDeposit, doWithdraw:this.doWithdraw,
+      depStatus:s.depStatus, hasDepStatus:!!s.depStatus, liveBusy:s.liveBusy,
+      depBtnLabel: s.liveBusy?'Working…':'Confirm Deposit', wdBtnLabel: s.liveBusy?'Working…':'Confirm Withdraw',
+      btnOpacity: s.liveBusy?0.6:1,
+      showDepAddr: s.live && !!s.depositAddr, depAddrShort: s.depositAddr?(s.depositAddr.slice(0,8)+'…'+s.depositAddr.slice(-8)):'',
+      depSubtitle: s.live?'Your wallet signs a transfer into GoatFC.':'Simulated for this prototype — no real funds move.',
       strike:this.strike, nextShot:this.nextShot,
       isIntro:s.screen==='intro', isCountry:s.screen==='country', isGame:s.screen==='game',
       goalPct, goalPctTxt:goalPct+'%', missPctTxt:(100-goalPct)+'%',

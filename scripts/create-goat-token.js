@@ -22,5 +22,7 @@ const _b = require("bs58"); const bs58 = _b && _b.default ? _b.default : _b;
   const ata = await getOrCreateAssociatedTokenAccount(conn, payer, mint, payer.publicKey);
   await mintTo(conn, payer, mint, ata.address, payer, SUPPLY * (10n ** BigInt(DECIMALS)));
   console.log("✓ minted", SUPPLY.toString(), "$GOAT to", ata.address.toBase58());
-  console.log("\nSet GOAT_MINT=" + mint.toBase58() + " in your env. Keep MINT_AUTH secret.");
+  const varName = /mainnet/.test(RPC) ? "GOAT_MINT_MAINNET" : "GOAT_MINT_DEVNET";
+  console.log("\nSet " + varName + "=" + mint.toBase58() + " in Vercel env. Keep MINT_AUTH secret.");
+  console.log("(Use the TREASURY secret as MINT_AUTH so the treasury holds the $GOAT it pays out.)");
 })().catch((e) => { console.error("✗", e.message || e); process.exit(1); });
