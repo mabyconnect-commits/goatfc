@@ -365,7 +365,7 @@
   document.addEventListener("keydown", (e) => { if (["INPUT", "TEXTAREA"].includes(e.target.tagName)) return; if (e.key === "g") selectSide("goal"); else if (e.key === "m") selectSide("miss"); else if ((e.key === " " || e.key === "Enter") && address && !$(".overlay.open")) { e.preventDefault(); shoot(); } });
 
   /* ============================================================ GENERAL PENALTY */
-  const GP_ROUND = 60, GP_POOL_PER = 2, GP_SEED = "goatfc-general-penalty-v1";
+  const GP_ROUND = 30, GP_POOL_PER = 2, GP_SEED = "goatfc-general-penalty-v1", GP_ROUNDS_PER_DAY = 2880;
   const gpEl = { timer: $("#gpTimer"), pool: $("#gpPool"), tok: $("#gpTok"), stake: $("#gpStake"), join: $("#gpJoin"), status: $("#gpStatus"), last: $("#gpLast"), mode: $("#gpMode") };
   let gpMode = "split"; // today's drop mode: "split" | "winner"
   let gpSide = "goal", gpAngle = "", gpPending = null, gpBusy = false, gpLastPoll = 0;
@@ -381,7 +381,7 @@
     return { side, land };
   }
   function gpHash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
-  function gpTrigger(r) { const day = Math.floor(r / 1440); return day * 1440 + (gpHash("jp" + day) % 1440); }
+  function gpTrigger(r) { const day = Math.floor(r / GP_ROUNDS_PER_DAY); return day * GP_ROUNDS_PER_DAY + (gpHash("jp" + day) % GP_ROUNDS_PER_DAY); }
   // mode is decided AT the trigger round and stays hidden until the drop fires
   function gpModeFor(r) { return (gpHash("jpmode" + r) % 2) ? "winner" : "split"; }
   function gpRenderMode() {
