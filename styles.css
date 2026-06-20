@@ -269,3 +269,6 @@ button{font-family:inherit;cursor:pointer}
   .standings-mini{order:3;width:100%;margin:.15rem 0 0;justify-content:center}
   .sm-bar{width:min(280px,56vw)}
 }
+.wallet-list{display:grid;gap:10px}
+.wallet-opt,.wallet-list a.btn{justify-content:flex-start;gap:.7rem;font-size:1rem;padding:.9rem 1.1rem}
+.wallet-list span{font-size:1.3rem}

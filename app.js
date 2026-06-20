@@ -113,15 +113,58 @@
   }
 
   /* ============================================================ wallet */
-  const getProvider = () => (window.phantom?.solana?.isPhantom && window.phantom.solana) || (window.solana?.isPhantom && window.solana) || null;
-  async function connect(eager) {
-    provider = getProvider();
-    if (!provider) { el.connectBtn.textContent = "Get Phantom ↗"; if (!eager) window.open("https://phantom.app/", "_blank"); return; }
+  let walletName = null;
+  const WALLETS = {
+    phantom: { label: "Phantom", emoji: "👻", url: "https://phantom.app/", get: () => (window.phantom?.solana?.isPhantom && window.phantom.solana) || (window.solana?.isPhantom && window.solana) || null },
+    solflare: { label: "Solflare", emoji: "🔆", url: "https://solflare.com/", get: () => (window.solflare && (window.solflare.isSolflare || window.solflare.connect)) ? window.solflare : null },
+  };
+  const detectWallets = () => Object.keys(WALLETS).map((k) => ({ name: k, ...WALLETS[k], prov: WALLETS[k].get() })).filter((w) => w.prov);
+  const pubkeyOf = (p) => { try { return p && p.publicKey ? p.publicKey.toString() : null; } catch (_) { return null; } };
+
+  async function doConnect(w, eager) {
+    provider = w.prov; walletName = w.name;
     try {
-      const resp = await provider.connect(eager ? { onlyIfTrusted: true } : {});
-      address = resp.publicKey.toString();
+      if (w.name === "phantom") {
+        const resp = await provider.connect(eager ? { onlyIfTrusted: true } : {});
+        address = (resp && resp.publicKey ? resp.publicKey.toString() : null) || pubkeyOf(provider);
+      } else {
+        // Solflare
+        if (eager && !provider.isConnected) return; // never prompt on eager
+        await provider.connect();
+        address = pubkeyOf(provider);
+        if (!address) { await new Promise((r) => setTimeout(r, 400)); address = pubkeyOf(provider); }
+      }
+      if (!address) return;
+      localStorage.setItem("goatfc:wallet", w.name);
       await onConnected();
     } catch (_) {}
+  }
+
+  async function connect(eager) {
+    const wallets = detectWallets();
+    if (eager) {
+      const last = localStorage.getItem("goatfc:wallet");
+      const w = wallets.find((x) => x.name === last) || (wallets.length === 1 ? wallets[0] : null);
+      if (w) doConnect(w, true);
+      // Solflare can auto-connect a moment after load — finish silently if it does
+      const sf = WALLETS.solflare.get();
+      if (sf && sf.on && (last === "solflare" || !last)) sf.on("connect", () => { if (!address) doConnect({ name: "solflare", prov: sf }, true); });
+      return;
+    }
+    if (!wallets.length) return openWalletModal([]);       // none installed → show install links
+    if (wallets.length === 1) return doConnect(wallets[0], false);
+    openWalletModal(wallets);                                // choose Phantom or Solflare
+  }
+
+  function openWalletModal(wallets) {
+    const list = $("#walletList");
+    if (wallets.length) {
+      list.innerHTML = wallets.map((w) => `<button class="btn full wallet-opt" data-w="${w.name}"><span>${w.emoji}</span> ${w.label}</button>`).join("");
+      $$(".wallet-opt", list).forEach((b) => b.addEventListener("click", () => { close("walletModal"); const w = wallets.find((x) => x.name === b.dataset.w); if (w) doConnect(w, false); }));
+    } else {
+      list.innerHTML = Object.values(WALLETS).map((w) => `<a class="btn full" href="${w.url}" target="_blank" rel="noopener"><span>${w.emoji}</span> Install ${w.label} ↗</a>`).join("");
+    }
+    open("walletModal");
   }
   async function onConnected() {
     await API.detect();
