@@ -1023,7 +1023,7 @@
             </div>
             <div style="border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);padding:10px 12px;margin-bottom:12px;">
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#7d8aa0;letter-spacing:1px;margin-bottom:4px;">RECENT ROUNDS</div>
-              <sc-for list="{{ gpHistFeed }}" as="gh" hint-placeholder-count="5">
+              <sc-for list="{{ gpHistFeed }}" as="gh" hint-placeholder-count="3">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.05);font-family:'JetBrains Mono',monospace;font-size:11px;">
                   <span style="color:#7d8aa0;min-width:60px;">{{ gh.round }}</span>
                   <span style="font-weight:800;color:#fff;flex:1;">{{ gh.res }}</span>
@@ -2454,7 +2454,7 @@ class Component extends DCLogic {
       gpPlayersTxt:s.gpPlayers.toLocaleString(),
       gpRewardPoolTxt:s.gpRewardPool.toLocaleString(),
       gpWageredTxt:this.fmt(s.gpWagered,2),
-      gpHistFeed:(s.gpHistory||[]).slice(0,5).map((r,i)=>({key:i, round:'#'+r.round.toLocaleString(), res:r.scored?'⚽ GOAL':'🧤 SAVE', zone:ZN[r.zone]||r.zone, players:r.players.toLocaleString(), wag:this.fmt(r.wagered,2)})),
+      gpHistFeed:(s.gpHistory||[]).slice(0,3).map((r,i)=>({key:i, round:'#'+r.round.toLocaleString(), res:r.scored?'⚽ GOAL':'🧤 SAVE', zone:ZN[r.zone]||r.zone, players:r.players.toLocaleString(), wag:this.fmt(r.wagered,2)})),
       gpMyPickTxt, gpResLabel, gpResColor, gpResZone,
       gpResScored: gpReveal&&s.gpResult.scored,
       gpMyResult, gpHasMyResult:!!gpMyResult,
