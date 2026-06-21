@@ -12,7 +12,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{keccak, hash, system_instruction, program::{invoke, invoke_signed}};
 
-declare_id!("Goatfc111111111111111111111111111111111111");
+declare_id!("D4XN8m2M8BBitfPpb3jNe3ji3TC5pnP4pcAmhSxwgr7p");
 
 const MAIN_BPS: u128 = 19_800; // x1.98  (basis points / 10_000)
 const ZONE_BPS: u128 = 99_000; // x9.90

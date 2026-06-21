@@ -2,7 +2,7 @@
 anchor_version = "0.30.1"
 
 [programs.devnet]
-goatfc = "Goatfc111111111111111111111111111111111111"
+goatfc = "D4XN8m2M8BBitfPpb3jNe3ji3TC5pnP4pcAmhSxwgr7p"
 
 [provider]
 cluster = "devnet"
