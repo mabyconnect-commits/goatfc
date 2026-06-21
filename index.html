@@ -1599,7 +1599,7 @@ class Component extends DCLogic {
       // ===== $GOAT token economy + dopamine loops =====
       goatTokens:1240, goatPrice:0.0428, goatChange:12.4,
       tokenPop:0,
-      buybackSol:84.27, goatBurned:1968420,
+      buybackSol:84.27, goatBurned:1968420, treasurySol:0,
       streakDay:4, streakClaimedToday:false,
       spinsLeft:1, spinning:false, spinAngle:0, spinResult:null,
       passXp:340, passClaimed:{},
@@ -1890,12 +1890,15 @@ class Component extends DCLogic {
       goals.sort((x,y)=>x.min-y.min);
       return {fx:sel.fx, a:fx.a, b:fx.b, mkt:sel.mkt, pick:sel.pick, odds:sel.odds, finalA, finalB, goals, A:0, B:0};
     });
-    const buyback=Math.round(s.simStake*0.02*1000)/1000;
+    const buyback=Math.round(s.simStake*0.02*1000)/1000;       // 2% buyback & burn
+    const bountyCut=Math.round(s.simStake*0.01*1000)/1000;     // 1% → bounty pool
+    const treas=Math.round(s.simStake*0.01*1000)/1000;         // 1% → treasury
     this._legs=legs;
     this.setState({screen:'match', matchRunning:true, matchMin:0, matchEvents:[], accaResult:null,
       matchLegs:legs.map(l=>({fx:l.fx,a:l.a,b:l.b,mkt:l.mkt,pick:l.pick,odds:l.odds,A:0,B:0})),
       balance:Math.round((s.balance-s.simStake)*1000)/1000,
-      buybackSol:Math.round((s.buybackSol+buyback)*1000)/1000, goatBurned:s.goatBurned+Math.round(buyback/s.goatPrice*100)});
+      buybackSol:Math.round((s.buybackSol+buyback)*1000)/1000, goatBurned:s.goatBurned+Math.round(buyback/s.goatPrice*100),
+      bountyPool:Math.round((s.bountyPool+bountyCut)*100)/100, treasurySol:Math.round((s.treasurySol+treas)*1000)/1000});
     if(this.matchTimer) clearInterval(this.matchTimer);
     this.matchTimer=setInterval(()=>this.matchTick(), 150);
   };
@@ -2086,10 +2089,12 @@ class Component extends DCLogic {
     const keeperZone = this.ZONES[Math.floor(Math.random()*5)];
     let scored = keeperZone!==ballZone;
     if(Math.random()<0.1) scored=false;
-    const fee=Math.round(s.stake*0.02*1000)/1000;
-    const bb=Math.round(s.stake*0.02*1000)/1000;
+    const pool=Math.round(s.stake*0.02*1000)/1000;   // reward pool — unique to individual penalty
+    const bb=Math.round(s.stake*0.02*1000)/1000;      // 2% buyback & burn
+    const bountyCut=Math.round(s.stake*0.01*1000)/1000; // 1% → bounty raffle pool
+    const treas=Math.round(s.stake*0.01*1000)/1000;   // 1% → treasury
     if(s.soundOn) this.playClip('penalty.mp3');
-    this.setState({phase:'runup', ballZone, keeperZone, scored, balance:Math.round((s.balance-s.stake)*1000)/1000, goatPool:Math.round((s.goatPool+fee)*1000)/1000, poolContributed:Math.round((s.poolContributed+fee)*10000)/10000, buybackSol:Math.round((s.buybackSol+bb)*1000)/1000, goatBurned:s.goatBurned+Math.round(bb/s.goatPrice*100)});
+    this.setState({phase:'runup', ballZone, keeperZone, scored, balance:Math.round((s.balance-s.stake)*1000)/1000, goatPool:Math.round((s.goatPool+pool)*1000)/1000, poolContributed:Math.round((s.poolContributed+pool)*10000)/10000, buybackSol:Math.round((s.buybackSol+bb)*1000)/1000, goatBurned:s.goatBurned+Math.round(bb/s.goatPrice*100), bountyPool:Math.round((s.bountyPool+bountyCut)*100)/100, treasurySol:Math.round((s.treasurySol+treas)*1000)/1000});
     setTimeout(()=>{ if(this.state.phase==='runup'){ this.setState({phase:'shooting'}); } }, 330);
     setTimeout(()=>this.impact(), 330+760);
   };
@@ -2104,9 +2109,10 @@ class Component extends DCLogic {
       const keeperZone = scored ? (this.ZONES.find(z=>z!==ballZone)||ballZone) : ballZone;
       // server is authoritative for balance + GOAT standings; stash for resolve()
       this._liveResult = { account:r.account, goatStats:r.goatStats };
-      const fee=Math.round(s.stake*0.02*1000)/1000, bb=fee;
+      const pool=Math.round(s.stake*0.02*1000)/1000, bb=pool;
+      const bountyCut=Math.round(s.stake*0.01*1000)/1000, treas=Math.round(s.stake*0.01*1000)/1000;
       if(s.soundOn) this.playClip('penalty.mp3');
-      this.setState({phase:'runup', ballZone, keeperZone, scored, goatPool:Math.round((s.goatPool+fee)*1000)/1000, poolContributed:Math.round((s.poolContributed+fee)*10000)/10000, buybackSol:Math.round((s.buybackSol+bb)*1000)/1000});
+      this.setState({phase:'runup', ballZone, keeperZone, scored, goatPool:Math.round((s.goatPool+pool)*1000)/1000, poolContributed:Math.round((s.poolContributed+pool)*10000)/10000, buybackSol:Math.round((s.buybackSol+bb)*1000)/1000, bountyPool:Math.round((s.bountyPool+bountyCut)*100)/100, treasurySol:Math.round((s.treasurySol+treas)*1000)/1000});
       setTimeout(()=>{ if(this.state.phase==='runup'){ this.setState({phase:'shooting'}); } }, 330);
       setTimeout(()=>this.impact(), 330+760);
     }catch(e){}

@@ -20,6 +20,8 @@ module.exports = async (req, res) => {
       const r = fc.settle(a, { side: b.side, stake: b.stake, zone: b.zone, zoneStake: b.zoneStake });
       if (r.error) return { http: 400, payload: { ok: false, error: r.error, balance: a.balance } };
       await fc.putAccount(a);
+      // 4% house fee: 2% buyback / 1% bounty pool / 1% treasury (on total stake)
+      try { await fc.routeBetFees(net, Number(b.stake) + (Number(b.zoneStake) || 0)); } catch (_) {}
       try {
         await fc.kv().lpush(fc.histKey(net, a.address), JSON.stringify({ ...r.record, goat }));
         await fc.kv().ltrim(fc.histKey(net, a.address), 0, 99);
