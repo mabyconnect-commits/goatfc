@@ -10,6 +10,7 @@ module.exports = async (req, res) => {
     networks: fc.NETWORKS,
     defaultNetwork: "devnet",
     goatUsd: Number(process.env.GOAT_USD || 0.1), // indicative GOAT→USD rate
+    programId: process.env.GOATFC_PROGRAM_ID || "", // on-chain penalty vault (devnet)
 
     econ: {
       mainMult: fc.ECON.MAIN_MULT, zoneMult: fc.ECON.ZONE_MULT,
