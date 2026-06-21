@@ -1737,7 +1737,9 @@ class Component extends DCLogic {
         .then(()=>this.setState({liveBusy:false}));
       return;
     }
-    this.setState({ gpMyBet:{pick:s.gpPick, zone:s.gpZone, stake:s.gpStake, settled:false}, balance:Math.round((s.balance-s.gpStake)*1000)/1000, gpPlayers:s.gpPlayers+1, gpWagered:Math.round((s.gpWagered+s.gpStake)*100)/100 });
+    // 4% house fee on the GP stake: 2% buyback / 1% bounty / 1% treasury (no individual reward pool here)
+    const bb=Math.round(s.gpStake*0.02*1000)/1000, bountyCut=Math.round(s.gpStake*0.01*1000)/1000, treas=Math.round(s.gpStake*0.01*1000)/1000;
+    this.setState({ gpMyBet:{pick:s.gpPick, zone:s.gpZone, stake:s.gpStake, settled:false}, balance:Math.round((s.balance-s.gpStake)*1000)/1000, gpPlayers:s.gpPlayers+1, gpWagered:Math.round((s.gpWagered+s.gpStake)*100)/100, buybackSol:Math.round((s.buybackSol+bb)*1000)/1000, goatBurned:s.goatBurned+Math.round(bb/s.goatPrice*100), bountyPool:Math.round((s.bountyPool+bountyCut)*100)/100, treasurySol:Math.round((s.treasurySol+treas)*1000)/1000 });
   };
   gpDismissDrop=()=>this.setState({gpDropFlash:false});
   componentWillUnmount(){ if(this.poolTimer) clearInterval(this.poolTimer); if(this.matchTimer) clearInterval(this.matchTimer); this.stopAllClips(); }

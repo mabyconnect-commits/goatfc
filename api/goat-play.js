@@ -31,6 +31,8 @@ module.exports = async (req, res) => {
       await fc.kv().rpush(fc.gpBetsKey(net, round), JSON.stringify({ address: b.address, side, stake, zone: angle, zoneStake: angleStake }));
       try { await fc.kv().incrbyfloat(fc.gpWagerKey(net, round), total); } catch (_) {}
       await fc.kv().set(playedKey, 1, { ex: 300 });
+      // 4% house fee on the GP stake: 2% buyback / 1% bounty pool / 1% treasury
+      try { await fc.routeBetFees(net, total); } catch (_) {}
       // pool +2 once per round (on the round's first bet)
       const last = Number(await fc.kv().get(fc.gpLastPoolKey(net)));
       if (last !== round) { await fc.kv().set(fc.gpLastPoolKey(net), round); try { await fc.kv().incrbyfloat(fc.gpPoolKey(net), fc.GP.POOL_PER_ROUND); } catch (_) {} }
