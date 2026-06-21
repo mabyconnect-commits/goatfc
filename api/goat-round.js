@@ -23,9 +23,10 @@ module.exports = async (req, res) => {
     const roundWagered = await fc.gpGetWager(net, round);
     let tokens = 0; const addr = req.query && req.query.address;
     if (fc.isAddress(addr)) tokens = await fc.gpGetTokens(net, addr);
+    let goatStats = null; try { goatStats = await fc.getGoatStats(net); } catch (_) {} // GOAT race standings (merged from goat-stats)
     // NOTE: the split-vs-winner mode is intentionally NOT exposed before the drop
     // — no one can know it until the jackpot actually fires.
-    return res.status(200).json({ ok: true, network: net, round, secondsLeft: fc.gpSecondsLeft(), poolPerRound: fc.GP.POOL_PER_ROUND, pool, tokens, roundPlayers, roundWagered, recent });
+    return res.status(200).json({ ok: true, network: net, round, secondsLeft: fc.gpSecondsLeft(), poolPerRound: fc.GP.POOL_PER_ROUND, pool, tokens, roundPlayers, roundWagered, recent, goatStats });
   } catch (e) {
     return res.status(500).json({ ok: false, error: "round_failed", detail: String(e) });
   }

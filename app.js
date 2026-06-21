@@ -100,7 +100,7 @@
   function loadStats() { try { const r = localStorage.getItem(statsKey()); if (r) return JSON.parse(r); } catch (_) {} return { ronaldo: 1287, messi: 1199 }; }
   const saveStats = () => localStorage.setItem(statsKey(), JSON.stringify(stats));
   async function refreshStats() {
-    if (API.live) { try { const d = await (await fetch("/api/goat-stats?network=" + API.network)).json(); if (d.ok) stats = { ronaldo: d.ronaldo, messi: d.messi }; } catch (_) {} }
+    if (API.live) { try { const d = await (await fetch("/api/goat-round?network=" + API.network)).json(); if (d.ok && d.goatStats) stats = { ronaldo: d.goatStats.ronaldo, messi: d.goatStats.messi }; } catch (_) {} }
     if (!stats) stats = loadStats();
     renderStandings();
   }

@@ -551,6 +551,19 @@
               </div>
             </div>
 
+            <!-- buy raffle tickets -->
+            <div style="position:relative;overflow:hidden;border-radius:16px;background:linear-gradient(135deg,rgba(224,168,46,.12),rgba(13,22,16,.5));border:1.5px solid rgba(224,168,46,.4);padding:14px;margin-bottom:13px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+                <div><div style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:14px;color:#fff;">🎟 Buy Raffle Tickets</div><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#9fb0a0;margin-top:2px;">{{ ticketPriceTxt }} SOL each · every ticket grows the pool</div></div>
+                <div style="text-align:right;"><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#7d8aa0;letter-spacing:.5px;">YOU HOLD</div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#e0a82e;">{{ bountyTickets }} 🎟</div></div>
+              </div>
+              <div style="display:flex;gap:7px;margin-bottom:10px;">
+                <sc-for list="{{ ticketChips }}" as="tc" hint-placeholder-count="4"><div onClick="{{ tc.tap }}" style="flex:1;height:42px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:{{ tc.bg }};border:1.5px solid {{ tc.border }};"><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:{{ tc.fg }};">{{ tc.label }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#7d8aa0;">🎟</span></div></sc-for>
+              </div>
+              <div onClick="{{ buyTickets }}" style="height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:14px;color:#0a1200;background:linear-gradient(90deg,#e0a82e,#f5c451);opacity:{{ buyTixOpacity }};">{{ ticketBuyLabel }}</div>
+              <sc-if value="{{ hasTixStatus }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9fb0c0;">{{ tixStatus }}</div></sc-if>
+            </div>
+
             <!-- live wins ticker -->
             <div style="position:relative;overflow:hidden;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);padding:8px 0;margin-bottom:13px;">
               <div style="display:flex;align-items:center;gap:26px;width:max-content;animation:gfcMarquee 22s linear infinite;padding-left:14px;">
@@ -1474,6 +1487,7 @@ class Component extends DCLogic {
     this.ZONES = ['TL','TR','C','BL','BR'];
     this.ZONEPOS = {TL:{l:30,t:34},TR:{l:70,t:34},C:{l:50,t:30},BL:{l:34,t:60},BR:{l:66,t:60}};
     this.ZONENAME = {TL:'TOP LEFT',TR:'TOP RIGHT',C:'CENTER',BL:'BOT LEFT',BR:'BOT RIGHT'};
+    this.TICKET_PRICE = 0.01; // SOL per raffle ticket — sales fund the bounty pool
     this.BOUNTIES = [
       {id:'daily-strike', cat:'DAILY', icon:'⚡', title:'Daily Striker', desc:'Take 5 penalties today', reward:0.05, tickets:2, cur:5, target:5, accent:'#c6f024',
         long:"Your daily warm-up. Step to the spot 5 times today — make or miss, every strike counts toward the bounty. Resets at midnight UTC.",
@@ -1578,6 +1592,7 @@ class Component extends DCLogic {
       bountyTickets:12, bountyPoints:340, bountyRank:847,
       bountySecs:48*3600+12*60+5,
       bountyPool:642.8,
+      ticketQty:5, tixStatus:'',
       claimed:{ 'daily-strike':false },
       qfPicks:[null,null,null,null], sfPicks:[null,null], finalPick:null,
       refCopied:false,
@@ -1775,6 +1790,23 @@ class Component extends DCLogic {
   claimBounty=(id)=>{
     const b=this.BOUNTIES.find(x=>x.id===id); if(!b) return;
     this.setState(s=>({ claimed:{...s.claimed,[id]:true}, balance:Math.round((s.balance+b.reward)*1000)/1000, bountyTickets:s.bountyTickets+b.tickets, bountyPoints:s.bountyPoints+120, goatTokens:s.goatTokens+(b.tickets*40), tokenPop:s.tokenPop+1, passXp:s.passXp+60 }));
+  };
+  setTicketQty=(n)=>this.setState({ticketQty:n, tixStatus:''});
+  buyTickets=()=>{
+    const s=this.state;
+    const qty=s.ticketQty, cost=Math.round(qty*this.TICKET_PRICE*1000)/1000;
+    if(cost>s.balance){ this.setState({modal:'account', accountTab:'deposit'}); return; }
+    if(s.live && s.token){
+      // live: ticket SOL is escrowed into the raffle pool server-side
+      this.setState({tixStatus:'Buying…'});
+      this.api('goat-bounty',{address:s.address, token:s.token, network:s.net, action:'buy', qty})
+        .then(r=>{ if(r&&r.ok){ this.applyAccount({balance:r.balance}); this.setState({bountyTickets:r.tickets, bountyPool:r.pool, tixStatus:'+'+qty+' tickets · in the pool'}); }
+                   else this.setState({tixStatus:(r&&r.error==='insufficient')?'Insufficient balance.':'Purchase failed.'}); })
+        .catch(()=>this.setState({tixStatus:'Purchase failed.'}));
+      return;
+    }
+    // BETA: simulated — debit balance, add tickets, ticket SOL grows the pool
+    this.setState(st=>({ balance:Math.round((st.balance-cost)*1000)/1000, bountyTickets:st.bountyTickets+qty, bountyPool:Math.round((st.bountyPool+cost)*100)/100, bountyPoints:st.bountyPoints+qty*5, tixStatus:'+'+qty+' tickets · '+this.fmt(cost,3)+' SOL into the pool' }));
   };
   pickQF=(i,side)=>this.setState(s=>{ const q=[...s.qfPicks]; q[i]=side; const sf=[...s.sfPicks]; // invalidate downstream if changed
     return {qfPicks:q}; });
@@ -2531,6 +2563,14 @@ class Component extends DCLogic {
       isBounty2:s.screen==='bounty',
       bountyClock, bountyPoolTxt:this.fmt(s.bountyPool,1),
       bountyTickets:s.bountyTickets, bountyPoints:s.bountyPoints.toLocaleString(), bountyRank:'#'+s.bountyRank.toLocaleString(),
+      ticketPriceTxt:this.fmt(this.TICKET_PRICE,2),
+      ticketChips:[1,5,10,25].map(n=>({key:n,label:String(n),tap:()=>this.setTicketQty(n),
+        bg:s.ticketQty===n?'rgba(224,168,46,.22)':'rgba(255,255,255,.05)',
+        border:s.ticketQty===n?'#e0a82e':'rgba(255,255,255,.1)',
+        fg:s.ticketQty===n?'#f5c451':'#cfd8e6'})),
+      buyTickets:this.buyTickets,
+      ticketBuyLabel:'Buy '+s.ticketQty+' · '+this.fmt(s.ticketQty*this.TICKET_PRICE,2)+' SOL',
+      tixStatus:s.tixStatus, hasTixStatus:!!s.tixStatus, buyTixOpacity:s.liveBusy?0.6:1,
       bounties, featured, questList, detail,
       qfView, sfView,
       finalAFlag:finalTeams[0]?finalTeams[0].f:'·', finalAName:finalTeams[0]?finalTeams[0].n:'TBD',
