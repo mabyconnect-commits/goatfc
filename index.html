@@ -542,7 +542,7 @@
               <div style="position:relative;flex:1;min-width:0;">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#9fb0a0;font-weight:700;">YOUR $GOAT</div>
                 <div style="font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:800;color:#c6f024;line-height:1;">{{ goatTokensTxt }}</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#7d8aa0;margin-top:2px;">≈ {{ goatValueTxt }} SOL</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#7d8aa0;margin-top:2px;">≈ {{ goatValueTxt }} SOL · {{ goatTokensUsdTxt }}</div>
               </div>
               <div style="position:relative;text-align:right;flex:none;">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#7d8aa0;letter-spacing:.5px;">PRICE</div>
@@ -981,7 +981,7 @@
         <div style="position:relative;flex:1;display:block;overflow-y:auto;background:radial-gradient(120% 60% at 50% 0%,#10233a 0%,#06101b 55%);">
           <div style="display:flex;align-items:center;gap:10px;padding:13px 16px 6px;">
             <div onClick="{{ goHome }}" style="display:flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);cursor:pointer;font-size:12px;font-weight:700;color:#cfd8e6;">‹ Back</div>
-            <div style="flex:1;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:5px;"><span style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:11px;color:#c6f024;letter-spacing:.3px;">$GOAT</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#c6f024;">{{ goatTokensTxt }}</span></div>
+            <div style="flex:1;text-align:right;display:flex;align-items:baseline;justify-content:flex-end;gap:5px;"><span style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:11px;color:#c6f024;letter-spacing:.3px;">$GOAT</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#c6f024;">{{ goatTokensTxt }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#7d8aa0;">≈ {{ goatTokensUsdTxt }}</span></div>
           </div>
 
           <div style="padding:2px 16px 24px;">
@@ -1005,7 +1005,7 @@
               <div onClick="{{ openGpPool }}" style="flex:1;position:relative;overflow:hidden;border-radius:15px;background:linear-gradient(135deg,#1a2410,#0c1606);border:1.5px solid rgba(198,240,36,.4);padding:11px 13px;display:flex;flex-direction:column;justify-content:center;">
                 <div style="font-family:'Archivo Expanded',sans-serif;font-weight:900;font-size:13px;color:#c6f024;letter-spacing:.3px;">$GOAT</div>
                 <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#9fb0a0;letter-spacing:.5px;margin-top:3px;">REWARD POOL</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:#c6f024;line-height:1;">{{ gpRewardPoolTxt }}</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:#c6f024;line-height:1;">{{ gpRewardPoolTxt }} <span style="font-size:10px;color:#7d8aa0;font-weight:700;">≈ {{ goatPoolUsdTxt }}</span></div>
                 <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#7d8aa0;margin-top:2px;">+2 / round · drops daily</div>
               </div>
             </div>
@@ -2454,6 +2454,7 @@ class Component extends DCLogic {
       goSpin:this.goSpin, goPass:this.goPass, claimStreak:this.claimStreak, doSpin:this.doSpin, toHub:this.openBounty,
       goatTokensTxt:s.goatTokens.toLocaleString(), goatPriceTxt:this.fmt(s.goatPrice,4),
       goatChangeTxt:(s.goatChange>=0?'+':'')+s.goatChange+'%', goatValueTxt:this.fmt(goatValueSol,3),
+      goatTokensUsdTxt:'$'+this.fmt(s.goatTokens*s.goatUsd,2), goatPoolUsdTxt:'$'+this.fmt(s.gpRewardPool*s.goatUsd,2),
       streakView, streakDayTxt:'Day '+s.streakDay, streakRewardTxt:'+'+streakReward+' $GOAT',
       streakClaimed:s.streakClaimedToday,
       streakBtnTxt: s.streakClaimedToday?'CLAIMED TODAY ✓':('CLAIM +'+streakReward+' $GOAT'),
