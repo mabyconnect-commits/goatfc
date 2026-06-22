@@ -10,8 +10,9 @@ module.exports = async (req, res) => {
   try {
     const net = fc.normNet((req.query && req.query.network) || (fc.body(req) || {}).network);
     if (req.method === "GET") {
+      let draw = null; try { draw = await fc.bountyResolve(net); } catch (_) {} // lazily run the draw past the deadline
       const st = await fc.bountyState(net, req.query && req.query.address);
-      return res.status(200).json({ ok: true, network: net, ticketPrice: fc.BOUNTY.TICKET_PRICE, ...st });
+      return res.status(200).json({ ok: true, network: net, ticketPrice: fc.BOUNTY.TICKET_PRICE, ...st, justDrew: draw && draw.resolved ? draw : null });
     }
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const b = fc.body(req);
